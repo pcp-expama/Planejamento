@@ -46,7 +46,10 @@
         }).catch((error) => {
             console.error("Firebase: Erro login.", error);
             const el = document.getElementById('data-status');
-            if(el) el.textContent = "Erro Auth Firebase";
+            if(el) {
+                el.textContent = "Erro de Login (Verifique Auth)";
+                el.classList.add('text-red-500');
+            }
         });
 
         function iniciarEscutaEmTempoReal() {
@@ -70,26 +73,80 @@
                 }, (error) => {
                     console.error("Firebase: Erro leitura.", error);
                     const statusEl = document.getElementById('data-status');
-                    if(statusEl) statusEl.textContent = "Erro Permissão (Verifique Regras)";
+                    if(statusEl) {
+                        statusEl.textContent = "Erro: Sem Permissão de Leitura";
+                        statusEl.className = "text-xs mt-1 text-red-500 font-bold";
+                    }
                 });
             } catch (e) { console.error("Firebase: Erro fatal.", e); }
         }
 
-        window.saveItemStatusToCloud = async function(itemId, isChecked) {
+        // Função de Salvamento (Unitário)
+        window.saveItemStatusToCloud = async function(itemId, isChecked, isSilent = false) {
             const docId = itemId.replace(/\//g, '_'); 
             const docRef = doc(db, dbCollectionPath, docId);
+            
+            // Feedback Visual de "Salvando..."
+            const statusEl = document.getElementById('data-status');
+            if(statusEl && !isSilent) {
+                statusEl.textContent = "Salvando alteração...";
+                statusEl.className = "text-xs mt-1 text-yellow-500 font-bold";
+            }
+
             try {
                 if (isChecked) {
                     await setDoc(docRef, { completed: true, timestamp: new Date().toISOString(), user: 'admin' });
                 } else {
                     await deleteDoc(docRef);
                 }
+                
+                if(statusEl && !isSilent) {
+                    setTimeout(() => {
+                        statusEl.textContent = "Online • Salvo com Sucesso";
+                        statusEl.className = "text-xs mt-1 text-green-500 font-bold";
+                    }, 500);
+                }
+
             } catch (e) {
                 console.error("Erro gravar:", e);
-                alert("Erro ao sincronizar. Verifique console.");
+                if(!isSilent) alert("ERRO AO SALVAR NO FIREBASE:\n" + e.message + "\n\nVerifique se o banco está em 'Modo de Teste' nas Regras.");
+                
+                if(statusEl) {
+                    statusEl.textContent = "Erro ao Salvar!";
+                    statusEl.className = "text-xs mt-1 text-red-500 font-bold";
+                }
+                
+                // Reverte visualmente se falhar
                 if (typeof window.updateAllVisuals === 'function') window.updateAllVisuals(); 
             }
         }
+
+        // Função de Salvamento Manual (Botão Forçar)
+        window.forceManualSync = async function() {
+            if(!window.isAdmin) return;
+            if(!confirm("Isso irá reenviar o status de TODOS os itens marcados na sua tela para o banco de dados. Continuar?")) return;
+
+            const btn = document.getElementById('btn-manual-save');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Enviando...';
+            btn.disabled = true;
+
+            let successCount = 0;
+            const items = Object.keys(window.completionStatus);
+            
+            for (const itemId of items) {
+                // Só salva o que está true
+                if(window.completionStatus[itemId]) {
+                    await window.saveItemStatusToCloud(itemId, true, true); // true = modo silencioso
+                    successCount++;
+                }
+            }
+
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            alert(`Sincronização Manual Concluída!\n${successCount} itens foram confirmados no servidor.`);
+        }
+
     </script>
 
     <style>
@@ -190,6 +247,11 @@
             <i class="fas fa-lock mr-2"></i> Acesso: Visitante
         </div>
 
+        <!-- BOTÃO DE SALVAR (SÓ PARA ADMIN) -->
+        <button id="btn-manual-save" class="btn btn-secondary w-full mb-6 hidden" onclick="window.forceManualSync()">
+            <i class="fas fa-cloud-upload-alt mr-2"></i> Salvar
+        </button>
+
         <button id="reload-button" class="btn w-full mb-6">Recarregar Dados</button>
 
         <a href="https://app.powerbi.com/links/B8TF3aTy_D?ctid=00efaec3-2fdf-400e-ab1c-0a8efb39d281&pbi_source=linkShare" 
@@ -228,7 +290,7 @@
         <div class="mt-auto border-t border-gray-700 pt-4">
             <div id="data-status" class="text-xs text-gray-400">Verificando...</div>
              <div id="data-last-updated" class="text-xs text-gray-500 mt-1"></div>
-             <p class="text-xs text-gray-500 mt-2">Versão: 2.1.0 (Sync)</p>
+             <p class="text-xs text-gray-500 mt-2">Versão: 2.2.0 (Force Save)</p>
              <p class="text-xs text-gray-500 mt-2">© Copyright 2025 Flora_Exportadora</p>
              <p class="text-xs text-gray-500 mt-2">Desenvolvido por Tales_Solidade</p>
         </div>
@@ -413,12 +475,16 @@
 
         function updateAdminUI() {
             const btn = document.getElementById('admin-btn');
+            const saveBtn = document.getElementById('btn-manual-save');
+            
             if (window.isAdmin) {
                 btn.className = 'admin-status admin-unlocked';
                 btn.innerHTML = '<i class="fas fa-unlock mr-2"></i> Acesso: Admin (PCP)';
+                if(saveBtn) saveBtn.classList.remove('hidden'); // MOSTRA BOTÃO DE SALVAR
             } else {
                 btn.className = 'admin-status admin-locked';
                 btn.innerHTML = '<i class="fas fa-lock mr-2"></i> Acesso: Visitante';
+                if(saveBtn) saveBtn.classList.add('hidden'); // ESCONDE BOTÃO DE SALVAR
             }
         }
         
