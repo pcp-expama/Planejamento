@@ -108,7 +108,7 @@
             } catch (e) {
                 console.error("Erro cloud:", e);
                 // Não alerta toda vez se estiver sem config, apenas loga
-                if (firebaseConfig.apiKey !== "COLE_SUA_API_KEY_AQUI") {
+                if (firebaseConfig.apiKey !== "AIzaSyA5DVhNqTe-kDygovMqZR1vU4TORvVKtOo") {
                     alert("Erro de sincronização. Verifique a internet ou permissões do Firestore.");
                 }
                 window.updateAllVisuals(); // Reverte visualmente se falhar
@@ -420,7 +420,7 @@
             } else {
                 const senha = prompt("Digite a senha de administrador:");
                 if (senha) {
-                    // Hash de 'pcp' é 110813
+                    
                     if (simpleHash(senha) === 110813) {
                         window.isAdmin = true;
                         updateAdminUI();
