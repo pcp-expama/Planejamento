@@ -67,7 +67,7 @@
                     
                     const statusEl = document.getElementById('data-status');
                     if(statusEl) {
-                        statusEl.textContent = "Online • Sincronizado";
+                        statusEl.textContent = "• Online";
                         statusEl.className = "text-xs mt-1 text-green-500 font-bold";
                     }
                 }, (error) => {
@@ -121,7 +121,7 @@
             }
         }
 
-        // Função de Salvamento Manual (Botão Forçar)
+        // Função de Salvamento Manual
         window.forceManualSync = async function() {
             if(!window.isAdmin) return;
             if(!confirm("Isso irá reenviar o status de TODOS os itens marcados na sua tela para o banco de dados. Continuar?")) return;
@@ -290,9 +290,9 @@
         <div class="mt-auto border-t border-gray-700 pt-4">
             <div id="data-status" class="text-xs text-gray-400">Verificando...</div>
              <div id="data-last-updated" class="text-xs text-gray-500 mt-1"></div>
-             <p class="text-xs text-gray-500 mt-2">Versão: 2.2.0 (Force Save)</p>
-             <p class="text-xs text-gray-500 mt-2">© Copyright 2025 Flora_Exportadora</p>
-             <p class="text-xs text-gray-500 mt-2">Desenvolvido por Tales_Solidade</p>
+             <p class="text-xs text-gray-500 mt-2">Versão: 1.0.0 </p>
+             <p class="text-xs text-gray-500 mt-2">© Copyright 2025 Flora Exportadora</p>
+             <p class="text-xs text-gray-500 mt-2">Desenvolvido por PCP_EXPAMA</p>
         </div>
     </aside>
 
@@ -1017,3 +1017,4 @@
     </script>
 </body>
 </html>
+
