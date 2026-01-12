@@ -9,69 +9,44 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- BIBLIOTECAS PDF ATUALIZADAS -->
+    <!-- BIBLIOTECAS PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- FIREBASE (Banco de dados em tempo real) -->
+    <!-- FIREBASE (CONEXÃO) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CONFIGURAÇÃO DO SEU BANCO DE DADOS (PREENCHA AQUI PARA GITHUB/PRODUÇÃO) ---
-        // 1. Vá em https://console.firebase.google.com/
-        // 2. Crie um projeto e adicione um app Web
-        // 3. Copie as configurações e cole abaixo entre as aspas:
-        const suaConfiguracaoPessoal = {
-            apiKey: "COLE_SUA_API_KEY_AQUI",
-            authDomain: "SEU_PROJETO.firebaseapp.com",
-            projectId: "SEU_PROJECT_ID",
-            storageBucket: "SEU_PROJETO.appspot.com",
-            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-            appId: "SEU_APP_ID"
+        // --- SUAS CHAVES REAIS ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5DVhNqTe-kDygovMqZR1vU4TORvVKtOo",
+            authDomain: "controle-producao-f444a.firebaseapp.com",
+            projectId: "controle-producao-f444a",
+            storageBucket: "controle-producao-f444a.firebasestorage.app",
+            messagingSenderId: "947022562404",
+            appId: "1:947022562404:web:270b482836081c65e98b71"
         };
 
-        // Lógica para detectar se está no Chat (Teste) ou no seu GitHub (Produção)
-        let firebaseConfig;
-        let dbCollectionPath;
+        const dbCollectionPath = "pcp_conclusoes";
 
-        if (typeof __firebase_config !== 'undefined') {
-            // Ambiente de Teste (Chat)
-            console.log("Ambiente: Teste/Chat");
-            firebaseConfig = JSON.parse(__firebase_config);
-            const envAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            dbCollectionPath = `artifacts/${envAppId}/public/data/pcp_conclusoes`;
-        } else {
-            // Ambiente de Produção (GitHub/Seu PC)
-            console.log("Ambiente: Produção (Usando suaConfiguracaoPessoal)");
-            const firebaseConfig = {
-                apiKey: "AIzaSyA5DVhNqTe-kDygovMqZR1vU4TORvVKtOo",
-                authDomain: "controle-producao-f444a.firebaseapp.com",
-                projectId: "controle-producao-f444a",
-                storageBucket: "controle-producao-f444a.firebasestorage.app",
-                messagingSenderId: "947022562404",
-                appId: "1:947022562404:web:270b482836081c65e98b71"
-                };
-            
-            dbCollectionPath = "pcp_conclusoes"; // Nome da coleção no seu banco pessoal
-        }
-        
-        // Inicialização
+        // Inicializa App
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         window.isAdmin = false;
         
+        // Login
         signInAnonymously(auth).then(() => {
-            console.log("Conectado ao Firebase.");
+            console.log("Firebase: Login ok.");
             iniciarEscutaEmTempoReal();
         }).catch((error) => {
-            console.error("Erro na conexão Firebase:", error);
-            // Se der erro (ex: config vazia), avisa na interface
-            document.getElementById('data-status').textContent = "Modo Offline (Sem Sync)";
+            console.error("Firebase: Erro login.", error);
+            const el = document.getElementById('data-status');
+            if(el) el.textContent = "Erro Auth Firebase";
         });
 
         function iniciarEscutaEmTempoReal() {
@@ -80,24 +55,28 @@
                 onSnapshot(q, (snapshot) => {
                     const novosStatus = {};
                     snapshot.forEach((doc) => { novosStatus[doc.id] = true; });
+                    
                     window.completionStatus = novosStatus;
+                    
                     if (typeof window.updateAllVisuals === 'function') {
                         window.updateAllVisuals();
                     }
-                    document.getElementById('data-status').textContent = "Online • Sincronizado";
-                    document.getElementById('data-status').classList.add('text-green-500');
+                    
+                    const statusEl = document.getElementById('data-status');
+                    if(statusEl) {
+                        statusEl.textContent = "Online • Sincronizado";
+                        statusEl.className = "text-xs mt-1 text-green-500 font-bold";
+                    }
                 }, (error) => {
-                    console.error("Erro no Snapshot:", error);
-                    document.getElementById('data-status').textContent = "Erro Sync (Verifique Permissões)";
+                    console.error("Firebase: Erro leitura.", error);
+                    const statusEl = document.getElementById('data-status');
+                    if(statusEl) statusEl.textContent = "Erro Permissão (Verifique Regras)";
                 });
-            } catch (e) {
-                console.error("Falha ao iniciar escuta:", e);
-            }
+            } catch (e) { console.error("Firebase: Erro fatal.", e); }
         }
 
         window.saveItemStatusToCloud = async function(itemId, isChecked) {
             const docId = itemId.replace(/\//g, '_'); 
-            // Usa o caminho definido dinamicamente
             const docRef = doc(db, dbCollectionPath, docId);
             try {
                 if (isChecked) {
@@ -106,12 +85,9 @@
                     await deleteDoc(docRef);
                 }
             } catch (e) {
-                console.error("Erro cloud:", e);
-                // Não alerta toda vez se estiver sem config, apenas loga
-                if (firebaseConfig.apiKey !== "AIzaSyA5DVhNqTe-kDygovMqZR1vU4TORvVKtOo") {
-                    alert("Erro de sincronização. Verifique a internet ou permissões do Firestore.");
-                }
-                window.updateAllVisuals(); // Reverte visualmente se falhar
+                console.error("Erro gravar:", e);
+                alert("Erro ao sincronizar. Verifique console.");
+                if (typeof window.updateAllVisuals === 'function') window.updateAllVisuals(); 
             }
         }
     </script>
@@ -205,7 +181,6 @@
 </head>
 <body class="grid grid-cols-12 gap-4 p-4 min-h-screen">
 
-    
     <aside class="col-span-12 md:col-span-2 card flex flex-col">
         <img id="logo" src="logo.png" alt="Logo" class="mb-5 max-h-17 object-contain self-center" onerror="this.style.display='none'; document.getElementById('logo-error').style.display='block';">
         <p id="logo-error" class="text-xs text-red-400 text-center mb-4" style="display: none;">Logo não encontrada</p>
@@ -259,15 +234,12 @@
         </div>
     </aside>
 
-    
     <main class="col-span-12 md:col-span-10">
-       
         <div class="card mb-4 flex flex-row justify-between items-center">
              <div>
                  <h1 class="text-2xl font-bold mb-1">PCP - PLANEJAMENTO E CONTROLE DE PRODUÇÃO</h1>
                  <p id="painel-info" class="text-sm text-gray-400"></p>
              </div>
-             
              <img src="EXPAMA.png" alt="Logo Direita" class="max-h-6 object-contain ml-4" onerror="this.style.display='none'">
         </div>
 
@@ -358,18 +330,13 @@
     -->
     <div id="mrp-modal-overlay" class="modal-overlay" onclick="hideMRPModal()"></div>
     <div id="mrp-modal-container" class="modal-container">
-        <!-- CABEÇALHO -->
         <div class="modal-header">
             <h3 id="mrp-modal-title" class="modal-title">Necessidade de Insumos</h3>
             <span id="mrp-modal-close" class="modal-close-btn" onclick="hideMRPModal()">&times;</span>
         </div>
-        
-        <!-- CONTEÚDO (TABELA) -->
         <div id="mrp-modal-content" class="modal-content">
             <p>Calculando...</p>
         </div>
-        
-        <!-- RODAPÉ -->
         <div class="modal-footer">
             <button id="export-mrp-pdf" class="btn btn-secondary">
                 Exportar PDF 
@@ -377,12 +344,26 @@
         </div>
     </div>
     
-    <!-- Script de Carregamento Dinâmico (Restaurado) -->
+    <!-- Script de Carregamento Dinâmico -->
     <script id="script-dados" src=""></script>
 
     <!-- SCRIPT PRINCIPAL -->
     <script> 
         const CAMINHO_JS = "dados_atuais.js";
+        
+        // --- DADOS DE FALLBACK (PARA NÃO TRAVAR SE O ARQUIVO EXTERNO FALHAR) ---
+        const FALLBACK_DATA = {
+            estoque: [
+                { Produto: "Pinus (Exemplo)", Perfil: "Deck (Exemplo)", M3_Estoque_Liquido: 50, Pecas_Estoque_Liquido: 1000 }
+            ],
+            pendentes: [
+                { PO: "PO-TESTE", Cliente: "Cliente Exemplo", Perfil: "Deck (Exemplo)", Produto: "Pinus (Exemplo)", Pendente_Pecas: 2000, Pendente_M3: 10, Espessura: 20, Largura: 100, Comprimento: 3000 }
+            ],
+            bom: [
+                { Produto: "Pinus (Exemplo)", Perfil: "Deck (Exemplo)", Componente: "Madeira Bruta", Consumo_M3: 1.1, Unidade_Medida: "M3", Tipo_Insumo: "MATERIA_PRIMA" }
+            ]
+        };
+
         let ALL_PENDING_ITEMS = []; 
         let ALL_STOCK_ITEMS = [];
         let ALL_BOM_DATA = [];
@@ -401,13 +382,12 @@
         let G_DASHBOARD_DATA = [];
 
         // === FUNÇÃO DE ADMINISTRAÇÃO (SEGURANÇA SIMPLES) ===
-        // Função de hash simples para não deixar a senha em texto plano
         function simpleHash(str) {
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 const char = str.charCodeAt(i);
                 hash = (hash << 5) - hash + char;
-                hash = hash & hash; // Converte para inteiro 32bit
+                hash = hash & hash; 
             }
             return hash;
         }
@@ -420,7 +400,6 @@
             } else {
                 const senha = prompt("Digite a senha de administrador:");
                 if (senha) {
-                    
                     if (simpleHash(senha) === 110813) {
                         window.isAdmin = true;
                         updateAdminUI();
@@ -523,7 +502,6 @@
             return dashboardData.filter(item => item.M3_Carteira_Volume > 0.001 || item.M3_Estoque_Liquido > 0.001);
         }
 
-        
         function renderPOFilters() {
             const poSelect = document.getElementById('po-select'); const poEmpty = document.getElementById('po-empty'); const poLoading = document.getElementById('po-loading');
             const poSelectReserva = document.getElementById('po-select-reserva'); const poEmptyReserva = document.getElementById('po-empty-reserva'); const poLoadingReserva = document.getElementById('po-loading-reserva');
@@ -547,12 +525,7 @@
         function renderDashboard(dashboardData) {
             const tbody = document.getElementById('dashboard-table').querySelector('tbody'); 
             tbody.innerHTML = ''; 
-            
-            if (dashboardData.length === 0) { 
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center text-gray-500 py-4">Nenhum dado para exibir.</td></tr>`; 
-                return; 
-            }
-            
+            if (dashboardData.length === 0) { tbody.innerHTML = `<tr><td colspan="9" class="text-center text-gray-500 py-4">Nenhum dado para exibir.</td></tr>`; return; }
             dashboardData.forEach(item => {
                 const am3 = item.M3_A_Produzir || 0;
                 const apct = item.Pacotes_A_Produzir || 0;
@@ -560,15 +533,10 @@
                 const cpct = apct > 0 ? 'highlight-red' : '';
                 const pm3 = cm3 ? ' pulse-red' : '';
                 const ppct = cpct ? ' pulse-red' : '';
-                
                 let toggleIcon = '';
                 if (am3 > 0.001) {
-                    toggleIcon = `<span class="mrp-toggle-icon" 
-                                        onclick="showMRPModal('${item.Produto}', '${item.Perfil}')">
-                                      +
-                                  </span>`;
+                    toggleIcon = `<span class="mrp-toggle-icon" onclick="showMRPModal('${item.Produto}', '${item.Perfil}')">+</span>`;
                 }
-
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="text-center">${toggleIcon}</td>
@@ -599,14 +567,12 @@
                 const itemId = generateItemId(item); 
                 const isItemCompleted = window.completionStatus[itemId] === true; 
                 const poState = poCompletionState[item.PO || 'na'];
-                
                 const emCarteiraPct = Math.round((item.Pendente_Pecas || 0) / getPecasPorPacote(item.Perfil)); const emCarteiraM3 = item.Pendente_M3 || 0;
                 let rowClass = ''; let poIndicatorIcon = '';
                 if (poState === 'full') { rowClass = 'completed-row'; poIndicatorIcon = '<span class="po-status-icon po-status-completed">✓</span>'; }
                 else if (poState === 'partial') { poIndicatorIcon = '<span class="po-status-icon po-status-partial">⚠️</span>'; if (isItemCompleted) rowClass = 'completed-row';}
                 else { if (isItemCompleted) rowClass = 'completed-row'; }
                 
-                // Lógica de Bloqueio do Checkbox
                 const isDisabled = window.isAdmin ? '' : 'disabled';
                 
                 tbody.innerHTML += `
@@ -630,9 +596,6 @@
              else { scrollerC.style.display = 'none'; scrollerCt.textContent = ''; }
         }
 
-
-        // --- MRP I ---
-        
         function getItemKey(item) {
             const p = item.Produto || 'N/A';
             const f = item.Perfil || 'N/A';
@@ -667,21 +630,17 @@
         function calculateMRPForProduct(produto, perfil) {
             const mpsItem = G_DASHBOARD_DATA.find(d => d.Produto === produto && d.Perfil === perfil);
             if (!mpsItem || mpsItem.M3_A_Produzir <= 0.001) { return {}; }
-
             const m3TotalCarteira = mpsItem.M3_Carteira_Volume;
             const m3TotalAProduzir = mpsItem.M3_A_Produzir;
             const necessidadesAgregadas = {};
-
             const pendingItemsForProduct = G_FILTERED_PENDING_ITEMS.filter(item => 
                 (item.Produto || 'N/A') === (produto || 'N/A') && 
                 (item.Perfil || 'N/A') === (perfil || 'N/A')
             );
-            
             pendingItemsForProduct.forEach(item => {
                 let proporcaoItem = 0;
                 if (m3TotalCarteira > 0.001) { proporcaoItem = (item.Pendente_M3 || 0) / m3TotalCarteira; }
                 const m3ItemAProduzir = m3TotalAProduzir * proporcaoItem;
-                
                 if (m3ItemAProduzir > 0) {
                     const receita = getRecipe(item); 
                     receita.forEach(bomItem => {
@@ -718,11 +677,7 @@
         function generateMRPTableHTML(necessidades) {
             const componentes = Object.keys(necessidades);
             if (componentes.length === 0) { return `<div class="p-4 text-center text-gray-400">Nenhum insumo encontrado na BOM para os itens a produzir.</div>`; }
-            let tableHTML = `
-                <table class="mrp-table-modal" id="mrp-export-table">
-                    <thead><tr><th>INSUMOS</th><th>TIPO</th><th>UNIDADE</th><th>NECESSIDADE</th></tr></thead>
-                    <tbody>
-            `;
+            let tableHTML = `<table class="mrp-table-modal" id="mrp-export-table"><thead><tr><th>INSUMOS</th><th>TIPO</th><th>UNIDADE</th><th>NECESSIDADE</th></tr></thead><tbody>`;
             componentes.sort();
             componentes.forEach(componente => {
                 const item = necessidades[componente];
@@ -799,7 +754,6 @@
             } catch (e) { alert("Ocorreu um erro ao gerar o PDF."); } finally { buttonElement.innerHTML = originalButtonText; buttonElement.disabled = false; if(callback) callback(); }
         }
 
-        // --- Interações ---
         function selectAllPOs() { const poSelect = document.getElementById('po-select'); selectedPOs.clear(); for (let i = 0; i < poSelect.options.length; i++) { poSelect.options[i].selected = true; selectedPOs.add(poSelect.options[i].value); } poSelect.dispatchEvent(new Event('change')); updateDashboardAndDetail(); }
         function clearAllPOs() { const poSelect = document.getElementById('po-select'); for (let i = 0; i < poSelect.options.length; i++) poSelect.options[i].selected = false; selectedPOs.clear(); poSelect.dispatchEvent(new Event('change')); updateDashboardAndDetail(); }
         function handleMainPOSelectionChange() { const poSelect = document.getElementById('po-select'); selectedPOs.clear(); for (let i = 0; i < poSelect.selectedOptions.length; i++) selectedPOs.add(poSelect.selectedOptions[i].value); updateDashboardAndDetail(); }
@@ -834,28 +788,19 @@
              return `${po}|${cli}|${perf}|${prod}|${e}|${l}|${c}`;
          }
 
-        // --- LÓGICA DE CHECKBOX DO FIREBASE ---
         window.toggleItemCompletion = function(checkboxElement) {
              const row = checkboxElement.closest('tr'); 
              const itemId = row.getAttribute('data-item-id'); 
              const isChecked = checkboxElement.checked;
              const po = itemId.split('|')[0];
-             
              if (!itemId || po === 'na') { console.error("ID inválido:", itemId); return; }
-             
-             // Atualiza visualmente imediatamente (otimismo)
              window.completionStatus[itemId] = isChecked;
              window.updatePOVisualStatus(po);
-             
-             // Envia para o banco de dados
              window.saveItemStatusToCloud(itemId, isChecked);
         }
         
-        // Função para atualizar visual quando chega dado do banco
         window.updateAllVisuals = function() {
-            // Re-renderiza a tabela atual para refletir novos status
             renderDetailTable(G_FILTERED_PENDING_ITEMS);
-            // Atualiza barra de rolagem
             recalculateAndRenderScroller();
         }
         
@@ -893,7 +838,7 @@
              completedPOsList.sort(); renderCompletedPOScroller(completedPOsList);
         }
 
-        // --- CARREGAMENTO DE DADOS REAIS ---
+        // --- FUNÇÃO CORRIGIDA COM FALLBACK ---
         function carregarScriptDados() {
             const globalStatus = document.getElementById('global-status'); 
             const dataStatus = document.getElementById('data-status'); 
@@ -910,74 +855,70 @@
             const ts = new Date().getTime(); const src = `${CAMINHO_JS}?v=${ts}`;
             const scriptNovo = document.createElement('script'); scriptNovo.id = 'script-dados'; scriptNovo.src = src;
 
-            scriptNovo.onload = () => {
-                lastDataLoadTime = new Date(); dataStatus.textContent = `'${CAMINHO_JS}' carregado.`; lastUpdated.textContent = `Atualizado: ${lastDataLoadTime.toLocaleTimeString('pt-BR')}`; console.log("Dados JS carregados.");
+            // Função helper para iniciar com dados (reais ou fake)
+            const iniciarComDados = (estoque, pendentes, bom, origem) => {
+                console.log(`Iniciando com dados de: ${origem}`);
+                ALL_STOCK_ITEMS = estoque;
+                ALL_PENDING_ITEMS = pendentes.filter(item => (item.Pendente_Pecas || 0) > 0 || (item.Pendente_M3 || 0) > 0.001);
+                ALL_BOM_DATA = bom;
                 
+                buildBomCache(ALL_BOM_DATA);
+                uniquePOs = [...new Set(ALL_PENDING_ITEMS.map(item => item.PO))].sort();
+                
+                if (ALL_PENDING_ITEMS.length === 0 && ALL_STOCK_ITEMS.length === 0) { 
+                    globalStatus.textContent = `AVISO: Dados vazios (${origem}).`; 
+                    globalStatus.className = 'status-box status-loading'; 
+                    uniquePOs = []; selectedPOs.clear(); reservedPOs.clear(); 
+                } else {
+                    const itemsEmCarteira = ALL_PENDING_ITEMS;
+                    globalStatus.textContent = `SUCESSO: ${itemsEmCarteira.length} itens carregados (${origem}).`; 
+                    globalStatus.className = 'status-box status-success'; 
+                    globalStatusTimeout = setTimeout(() => { globalStatus.style.opacity = '0'; }, 3000);
+                    
+                    selectedPOs = new Set([...selectedPOs].filter(po => uniquePOs.includes(po)));
+                    reservedPOs = new Set([...reservedPOs].filter(po => uniquePOs.includes(po)));
+                    if (selectedPOs.size === 0 && uniquePOs.length > 0) selectedPOs = new Set(uniquePOs);
+                }
+                
+                renderPOFilters();
+                const summary = calcularResumoTotal(ALL_PENDING_ITEMS);
+                renderSummary(summary);
+                updateDashboardAndDetail();
+                
+                lastDataLoadTime = new Date(); 
+                dataStatus.textContent = `'${origem}' carregado.`; 
+                lastUpdated.textContent = `Atualizado: ${lastDataLoadTime.toLocaleTimeString('pt-BR')}`;
+            };
+
+            scriptNovo.onload = () => {
                 if (typeof MOCK_ESTOQUE_LIQUIDO !== 'undefined' && 
                     typeof MOCK_DADOS_PENDENTES_DETALHADOS !== 'undefined' &&
-                    typeof DADOS_BOM !== 'undefined') 
-                {
-                    ALL_STOCK_ITEMS = MOCK_ESTOQUE_LIQUIDO;
-                    ALL_PENDING_ITEMS = MOCK_DADOS_PENDENTES_DETALHADOS.filter(item => (item.Pendente_Pecas || 0) > 0 || (item.Pendente_M3 || 0) > 0.001);
-                    ALL_BOM_DATA = DADOS_BOM; 
-                    
-                    buildBomCache(ALL_BOM_DATA);
-
-                    uniquePOs = [...new Set(ALL_PENDING_ITEMS.map(item => item.PO))].sort();
-                    
-                    if (ALL_PENDING_ITEMS.length === 0 && ALL_STOCK_ITEMS.length === 0) { 
-                        globalStatus.textContent = `AVISO: '${CAMINHO_JS}' vazio.`; globalStatus.className = 'status-box status-loading'; uniquePOs = []; selectedPOs.clear(); reservedPOs.clear(); 
-                    }
-                    else {
-                        const itemsEmCarteira = ALL_PENDING_ITEMS;
-                        globalStatus.textContent = `SUCESSO: ${itemsEmCarteira.length} itens, ${ALL_STOCK_ITEMS.length} estoque, ${ALL_BOM_DATA.length} receitas BOM.`; 
-                        globalStatus.className = 'status-box status-success'; globalStatusTimeout = setTimeout(() => { globalStatus.style.opacity = '0'; }, 3000); console.log("MOCKs ok.");
-                        
-                        selectedPOs = new Set([...selectedPOs].filter(po => uniquePOs.includes(po)));
-                        reservedPOs = new Set([...reservedPOs].filter(po => uniquePOs.includes(po)));
-                        if (selectedPOs.size === 0 && uniquePOs.length > 0) selectedPOs = new Set(uniquePOs);
-                    }
-                    
-                    renderPOFilters();
-                    const summary = calcularResumoTotal(ALL_PENDING_ITEMS);
-                    renderSummary(summary);
-                    
-                    console.log("[v1.9.0] Dados JS carregados, chamando update...");
-                    updateDashboardAndDetail();
-                    
-                } else { 
-                    globalStatus.textContent = `ERRO: '${CAMINHO_JS}' ok, mas variáveis (MOCK_*, DADOS_BOM) não definidas.`; 
-                    globalStatus.className = 'status-box status-error'; 
-                    console.error("MOCKs ou DADOS_BOM não encontradas."); 
+                    typeof DADOS_BOM !== 'undefined') {
+                    // SUCESSO: Arquivo externo carregou e tem as variáveis
+                    iniciarComDados(MOCK_ESTOQUE_LIQUIDO, MOCK_DADOS_PENDENTES_DETALHADOS, DADOS_BOM, "Arquivo Externo");
+                } else {
+                    // FALHA PARCIAL: Arquivo carregou mas não tem as variáveis (ou nomes errados)
+                    console.warn("Arquivo carregado mas variáveis indefinidas. Usando Fallback.");
+                    iniciarComDados(FALLBACK_DATA.estoque, FALLBACK_DATA.pendentes, FALLBACK_DATA.bom, "Exemplo (Fallback)");
+                    alert("Aviso: O arquivo 'dados_atuais.js' foi lido, mas as variáveis (MOCK_...) não foram encontradas. Usando dados de exemplo.");
                 }
             };
             
             scriptNovo.onerror = (e) => {
-                globalStatus.textContent = `ERRO: Falha ao carregar '${CAMINHO_JS}'. Verifique o console.`; 
-                globalStatus.className = 'status-box status-error'; 
-                globalStatus.style.opacity = '1';
-                dataStatus.textContent = 'Falha no carregamento.';
+                // FALHA TOTAL: Arquivo não encontrado (404)
                 console.error(`Erro ao carregar script: ${src}`, e);
-                ALL_PENDING_ITEMS = []; ALL_STOCK_ITEMS = []; ALL_BOM_DATA = []; uniquePOs = []; selectedPOs.clear(); reservedPOs.clear();
-                renderPOFilters(); 
-                renderSummary({ totalPOs: 0, totalPacotes: 0, totalM3: 0 });
-                renderDashboard([]); 
-                renderDetailTable([]);
-                
-                if (document.getElementById('dashboard-table')) {
-                    document.getElementById('dashboard-table').querySelector('tbody').innerHTML = `<tr><td colspan="9" class="text-center text-gray-500 py-4">Erro ao carregar dados.</td></tr>`;
-                }
+                console.warn("Usando Fallback devido a erro de carregamento.");
+                iniciarComDados(FALLBACK_DATA.estoque, FALLBACK_DATA.pendentes, FALLBACK_DATA.bom, "Exemplo (Fallback)");
+                // Opcional: alert("Não foi possível carregar 'dados_atuais.js'. Usando dados de exemplo.");
             };
 
             document.head.appendChild(scriptNovo);
         }
 
-        
         document.addEventListener('DOMContentLoaded', () => {
             const poSelect = document.getElementById('po-select');
             const poSelectReserva = document.getElementById('po-select-reserva');
             
-            // Carrega os dados chamando o script externo
             carregarScriptDados(); 
 
             document.getElementById('reload-button').addEventListener('click', carregarScriptDados);
