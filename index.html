@@ -11,11 +11,112 @@
     
     <!-- BIBLIOTECAS PDF ATUALIZADAS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- PLUGIN 'autoTable' PARA VELOCIDADE E QUALIDADE -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <style>
+    <!-- FIREBASE (Banco de dados em tempo real) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- CONFIGURAÇÃO DO SEU BANCO DE DADOS (PREENCHA AQUI PARA GITHUB/PRODUÇÃO) ---
+        // 1. Vá em https://console.firebase.google.com/
+        // 2. Crie um projeto e adicione um app Web
+        // 3. Copie as configurações e cole abaixo entre as aspas:
+        const suaConfiguracaoPessoal = {
+            apiKey: "COLE_SUA_API_KEY_AQUI",
+            authDomain: "SEU_PROJETO.firebaseapp.com",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_PROJETO.appspot.com",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+
+        // Lógica para detectar se está no Chat (Teste) ou no seu GitHub (Produção)
+        let firebaseConfig;
+        let dbCollectionPath;
+
+        if (typeof __firebase_config !== 'undefined') {
+            // Ambiente de Teste (Chat)
+            console.log("Ambiente: Teste/Chat");
+            firebaseConfig = JSON.parse(__firebase_config);
+            const envAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            dbCollectionPath = `artifacts/${envAppId}/public/data/pcp_conclusoes`;
+        } else {
+            // Ambiente de Produção (GitHub/Seu PC)
+            console.log("Ambiente: Produção (Usando suaConfiguracaoPessoal)");
+            const firebaseConfig = {
+                apiKey: "AIzaSyA5DVhNqTe-kDygovMqZR1vU4TORvVKtOo",
+                authDomain: "controle-producao-f444a.firebaseapp.com",
+                projectId: "controle-producao-f444a",
+                storageBucket: "controle-producao-f444a.firebasestorage.app",
+                messagingSenderId: "947022562404",
+                appId: "1:947022562404:web:270b482836081c65e98b71"
+                };
+            
+            dbCollectionPath = "pcp_conclusoes"; // Nome da coleção no seu banco pessoal
+        }
         
+        // Inicialização
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.isAdmin = false;
+        
+        signInAnonymously(auth).then(() => {
+            console.log("Conectado ao Firebase.");
+            iniciarEscutaEmTempoReal();
+        }).catch((error) => {
+            console.error("Erro na conexão Firebase:", error);
+            // Se der erro (ex: config vazia), avisa na interface
+            document.getElementById('data-status').textContent = "Modo Offline (Sem Sync)";
+        });
+
+        function iniciarEscutaEmTempoReal() {
+            try {
+                const q = collection(db, dbCollectionPath);
+                onSnapshot(q, (snapshot) => {
+                    const novosStatus = {};
+                    snapshot.forEach((doc) => { novosStatus[doc.id] = true; });
+                    window.completionStatus = novosStatus;
+                    if (typeof window.updateAllVisuals === 'function') {
+                        window.updateAllVisuals();
+                    }
+                    document.getElementById('data-status').textContent = "Online • Sincronizado";
+                    document.getElementById('data-status').classList.add('text-green-500');
+                }, (error) => {
+                    console.error("Erro no Snapshot:", error);
+                    document.getElementById('data-status').textContent = "Erro Sync (Verifique Permissões)";
+                });
+            } catch (e) {
+                console.error("Falha ao iniciar escuta:", e);
+            }
+        }
+
+        window.saveItemStatusToCloud = async function(itemId, isChecked) {
+            const docId = itemId.replace(/\//g, '_'); 
+            // Usa o caminho definido dinamicamente
+            const docRef = doc(db, dbCollectionPath, docId);
+            try {
+                if (isChecked) {
+                    await setDoc(docRef, { completed: true, timestamp: new Date().toISOString(), user: 'admin' });
+                } else {
+                    await deleteDoc(docRef);
+                }
+            } catch (e) {
+                console.error("Erro cloud:", e);
+                // Não alerta toda vez se estiver sem config, apenas loga
+                if (firebaseConfig.apiKey !== "COLE_SUA_API_KEY_AQUI") {
+                    alert("Erro de sincronização. Verifique a internet ou permissões do Firestore.");
+                }
+                window.updateAllVisuals(); // Reverte visualmente se falhar
+            }
+        }
+    </script>
+
+    <style>
         :root {
             --bg-primary: #0D1117;
             --bg-secondary: #161B22;
@@ -44,6 +145,9 @@
         tbody tr:hover:not(.completed-row) { background-color: #21262D; }
         .completed-row td { background-color: var(--completed-bg) !important; color: var(--completed-text); text-decoration: line-through; }
         .completed-row td input[type="checkbox"] { opacity: 0.7; }
+        
+        input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.3; filter: grayscale(100%); }
+
         .po-status-icon { margin-left: 0.5rem; font-size: 0.9em; font-weight: bold; display: inline-block; }
         .po-status-completed { color: var(--icon-completed-color); }
         .po-status-partial { color: var(--icon-partial-color); }
@@ -52,62 +156,18 @@
         .metric-value { font-size: 1.875rem; font-weight: 600; color: var(--text-primary); }
         .btn { background-color: var(--accent-primary); color: var(--bg-primary); padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; cursor: pointer; transition: background-color 0.2s; border: none; }
         .btn:hover { background-color: var(--accent-secondary); }
-        .btn.btn-secondary {
-            background-color: var(--bg-secondary);
-            color: var(--accent-primary1);
-            border: 1px solid var(--border-color);
-        }
-        .btn.btn-secondary:hover {
-            background-color: var(--accent-secondary);
-            color: var(--bg-primary);
-            border-color: var(--accent-secondary);
-        }
-        /* Estilo específico para o botão de destaque Global */
-        .btn-global-export {
-            background-color: #983A1E; /* Verde GitHub */
-            color: #000000;
-            font-weight: bold;
-            padding: 0.75rem 1.5rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .btn-global-export:hover {
-            background-color: #E1D7C7;
-        }
+        .btn.btn-secondary { background-color: var(--bg-secondary); color: var(--accent-primary1); border: 1px solid var(--border-color); }
+        .btn.btn-secondary:hover { background-color: var(--accent-secondary); color: var(--bg-primary); border-color: var(--accent-secondary); }
+        .btn-global-export { background-color: #983A1E; color: #000000; font-weight: bold; padding: 0.75rem 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-global-export:hover { background-color: #E1D7C7; }
 
         .btn-filter { background-color: var(--bg-secondary); color: var(--accent-primary1); padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s; border: 1px solid var(--border-color); margin-right: 0.5rem; }
         .btn-filter:hover { background-color: var(--accent-secondary); color: var(--bg-primary); border-color: var(--accent-secondary); }
         
-        
-        .po-select-list {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            width: 100%;
-            border-radius: 6px;
-            padding: 0.5rem;
-            height: 10rem;
-            overflow-y: auto;
-             -webkit-tap-highlight-color: transparent;
-        }
-        .po-select-list option {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-            white-space: nowrap;
-            color: var(--text-primary);
-            background-color: var(--bg-secondary);
-            cursor: pointer;
-        }
-        .po-select-list option:checked,
-        .po-select-list option:hover:checked {
-             background-color: var(--accent-secondary);
-             color: var(--bg-primary);
-             font-weight: bold;
-        }
-        .po-select-list option:hover:not(:checked) {
-            background-color: #21262D;
-        }
+        .po-select-list { background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); width: 100%; border-radius: 6px; padding: 0.5rem; height: 10rem; overflow-y: auto; -webkit-tap-highlight-color: transparent; }
+        .po-select-list option { padding: 0.25rem 0.5rem; font-size: 0.75rem; white-space: nowrap; color: var(--text-primary); background-color: var(--bg-secondary); cursor: pointer; }
+        .po-select-list option:checked, .po-select-list option:hover:checked { background-color: var(--accent-secondary); color: var(--bg-primary); font-weight: bold; }
+        .po-select-list option:hover:not(:checked) { background-color: #21262D; }
 
         .status-box { padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; transition: opacity 0.5s ease-out; }
         .status-loading { background-color: rgba(251, 191, 36, 0.1); border: 1px solid #D97706; color: #FBBF24; }
@@ -121,97 +181,26 @@
         #scroller-content { display: inline-block; padding-left: 100%; animation: scroll-left 30s linear infinite; color: var(--icon-completed-color); font-weight: bold; font-size: 0.875rem; line-height: 1.5rem; }
         @keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
         #completed-po-scroller:hover #scroller-content { animation-play-state: paused; }
-    
-        /* --- ESTILOS PARA O MRP 'MODAL' (POPUP) --- */
-        .modal-overlay {
-            display: none; /* Oculto por padrão */
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 40;
-            transition: opacity 0.2s ease-in-out;
-        }
-        .modal-container {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            z-index: 50;
-            width: 90%;
-            max-width: 50rem; /* 800px */
-            max-height: 90vh;
-            display: none; /* Oculto por padrão */
-            flex-direction: column;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .modal-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-        .modal-close-btn {
-            font-size: 1.875rem;
-            font-weight: bold;
-            color: var(--text-secondary);
-            cursor: pointer;
-            line-height: 1;
-        }
-        .modal-close-btn:hover {
-            color: var(--text-primary);
-        }
-        .modal-content {
-            padding: 1.5rem;
-            overflow-y: auto;
-            /* A tabela de MRP dentro do modal */
-        }
-        /* NOVO RODAPÉ DO MODAL */
-        .modal-footer {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid var(--border-color);
-            background-color: var(--bg-primary);
-            text-align: right;
-            border-bottom-left-radius: 8px;
-            border-bottom-right-radius: 8px;
-        }
-        .mrp-table-modal {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 0;
-            border: none;
-        }
-        .mrp-table-modal th, .mrp-table-modal td {
-            border: 1px solid var(--border-color);
-            padding: 0.5rem 1rem;
-            white-space: normal; /* Permite quebra de linha */
-            font-size: 0.875rem;
-        }
-        .mrp-table-modal th {
-            background-color: #2c313a;
-        }
-        .mrp-toggle-icon {
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.25rem;
-            color: var(--accent-primary1);
-            user-select: none;
-            display: inline-block;
-            width: 20px;
-            text-align: center;
-        }
-        .mrp-toggle-icon:hover {
-            color: var(--accent-secondary);
-        }
-    
+        
+        /* MODAL */
+        .modal-overlay { display: none; position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.7); z-index: 40; transition: opacity 0.2s ease-in-out; }
+        .modal-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; z-index: 50; width: 90%; max-width: 50rem; max-height: 90vh; display: none; flex-direction: column; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); }
+        .modal-title { font-size: 1.25rem; font-weight: 600; }
+        .modal-close-btn { font-size: 1.875rem; font-weight: bold; color: var(--text-secondary); cursor: pointer; line-height: 1; }
+        .modal-close-btn:hover { color: var(--text-primary); }
+        .modal-content { padding: 1.5rem; overflow-y: auto; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background-color: var(--bg-primary); text-align: right; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+        .mrp-table-modal { width: 100%; border-collapse: collapse; margin: 0; border: none; }
+        .mrp-table-modal th, .mrp-table-modal td { border: 1px solid var(--border-color); padding: 0.5rem 1rem; white-space: normal; font-size: 0.875rem; }
+        .mrp-table-modal th { background-color: #2c313a; }
+        .mrp-toggle-icon { cursor: pointer; font-weight: bold; font-size: 1.25rem; color: var(--accent-primary1); user-select: none; display: inline-block; width: 20px; text-align: center; }
+        .mrp-toggle-icon:hover { color: var(--accent-secondary); }
+        
+        /* ADMIN BTN */
+        .admin-status { font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; margin-bottom: 1rem; text-align: center; border: 1px solid transparent; cursor: pointer; }
+        .admin-locked { border-color: #30363D; color: #8B949E; background-color: #161B22; }
+        .admin-unlocked { border-color: #238636; color: #3fb950; background-color: rgba(35, 134, 54, 0.1); }
     </style>
 </head>
 <body class="grid grid-cols-12 gap-4 p-4 min-h-screen">
@@ -219,24 +208,24 @@
     
     <aside class="col-span-12 md:col-span-2 card flex flex-col">
         <img id="logo" src="logo.png" alt="Logo" class="mb-5 max-h-17 object-contain self-center" onerror="this.style.display='none'; document.getElementById('logo-error').style.display='block';">
-        <p id="logo-error" class="text-xs text-red-400 text-center mb-4" style="display: none;">Logo 'logo.png' não encontrada (Coloque na mesma pasta do HTML).</p>
+        <p id="logo-error" class="text-xs text-red-400 text-center mb-4" style="display: none;">Logo não encontrada</p>
+
+        <!-- BOTÃO DE LOGIN/STATUS ADMIN -->
+        <div id="admin-btn" class="admin-status admin-locked" onclick="toggleAdmin()">
+            <i class="fas fa-lock mr-2"></i> Acesso: Visitante
+        </div>
 
         <button id="reload-button" class="btn w-full mb-6">Recarregar Dados</button>
 
         <a href="https://app.powerbi.com/links/B8TF3aTy_D?ctid=00efaec3-2fdf-400e-ab1c-0a8efb39d281&pbi_source=linkShare" 
            class="btn-filter flex items-center w-full justify-center" 
            target="_blank">
-            <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/New_Power_BI_Logo.svg/2048px-New_Power_BI_Logo.svg.png" 
-                alt="Logotipo do Power BI - Acessar Dashboard" 
-                style="width: 20px; height: 20px; border: none;"
-                class="mr-2"
-            >
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/New_Power_BI_Logo.svg/2048px-New_Power_BI_Logo.svg.png" 
+                 alt="Logotipo do Power BI" style="width: 20px; height: 20px; border: none;" class="mr-2">
            Dashboard De Produção
         </a>
 
-        <br> 
-        <br>
+        <br><br>
         
         <h2 class="text-lg font-semibold mb-3 border-b border-gray-700 pb-2">Filtro de POs</h2>
         <div class="mb-2">
@@ -249,9 +238,8 @@
         </div>
         <p id="po-empty" class="text-sm text-green-400 hidden">Nenhum pedido pendente!</p>
         
-
         <h2 class="text-lg font-semibold mb-3 border-b border-gray-700 pb-2">Filtro de POs</h2>
-        <p class="text-xs text-gray-400 mb-2">Selecione aqui POs para *subtrair* do estoque no painel "MPS - Plano Mestre de Produção".</p>
+        <p class="text-xs text-gray-400 mb-2">Selecione aqui POs para *subtrair* do estoque.</p>
         <div class="mb-2">
             <button id="select-all-po-reserva" class="btn-filter">Selecionar Todas</button>
             <button id="clear-all-po-reserva" class="btn-filter">Limpar Seleção</button>
@@ -262,19 +250,12 @@
         </div>
         <p id="po-empty-reserva" class="text-sm text-green-400 hidden">Nenhum pedido pendente!</p>
         
-
-
         <div class="mt-auto border-t border-gray-700 pt-4">
-        
             <div id="data-status" class="text-xs text-gray-400">Verificando...</div>
              <div id="data-last-updated" class="text-xs text-gray-500 mt-1"></div>
-
-             <p class="text-xs text-gray-500 mt-2">Versão: 1.0.0</p>
-
+             <p class="text-xs text-gray-500 mt-2">Versão: 2.1.0 (Sync)</p>
              <p class="text-xs text-gray-500 mt-2">© Copyright 2025 Flora_Exportadora</p>
-
              <p class="text-xs text-gray-500 mt-2">Desenvolvido por Tales_Solidade</p>
-                
         </div>
     </aside>
 
@@ -336,20 +317,20 @@
                     </tbody>
                 </table>
             </div>
-            <!-- NOVO BOTÃO: EXPORTAR PDF GLOBAL -->
             <div class="mt-4 flex justify-end">
                 <button id="btn-global-mrp-pdf" class="btn btn-global-export">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="mr-2">
                       <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
                       <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
                     </svg>
-                     MRP - Exportar Lista de Compras (PDF)
+                      MRP - Exportar Lista de Compras (PDF)
                 </button>
             </div>
         </div>
 
         <div class="card">
             <h2 class="text-xl font-semibold mb-4">Tabela de Itens em Carteira</h2>
+            <p class="text-xs text-gray-500 mb-2 italic">* Apenas administradores podem alterar o status de conclusão.</p>
              <div class="table-container">
                 <table id="detail-table">
                     <thead>
@@ -373,9 +354,7 @@
     </main>
 
     <!-- 
-      ==================================================
-      ESTRUTURA DO MODAL (POPUP)
-      ================================================== 
+      MODAL (POPUP)
     -->
     <div id="mrp-modal-overlay" class="modal-overlay" onclick="hideMRPModal()"></div>
     <div id="mrp-modal-container" class="modal-container">
@@ -390,37 +369,79 @@
             <p>Calculando...</p>
         </div>
         
-        <!-- RODAPÉ (MODAL INDIVIDUAL) -->
+        <!-- RODAPÉ -->
         <div class="modal-footer">
             <button id="export-mrp-pdf" class="btn btn-secondary">
                 Exportar PDF 
             </button>
         </div>
     </div>
-    <!-- ================================================== -->
-
-
+    
+    <!-- Script de Carregamento Dinâmico (Restaurado) -->
     <script id="script-dados" src=""></script>
 
+    <!-- SCRIPT PRINCIPAL -->
     <script> 
-        
         const CAMINHO_JS = "dados_atuais.js";
-        let ALL_PENDING_ITEMS = []; // MOCK_DADOS_PENDENTES_DETALHADOS (com dimensões)
-        let ALL_STOCK_ITEMS = [];   // MOCK_ESTOQUE_LIQUIDO (agregado por P/P)
-        let ALL_BOM_DATA = [];      // DADOS_BOM (com dimensões)
+        let ALL_PENDING_ITEMS = []; 
+        let ALL_STOCK_ITEMS = [];
+        let ALL_BOM_DATA = [];
         
         let uniquePOs = [];
         let selectedPOs = new Set();
         let reservedPOs = new Set(); 
         let lastDataLoadTime = null;
         let globalStatusTimeout = null;
-        let completionStatus = {};
-        const STORAGE_KEY = 'pcpCompletionStatus'; 
+        
+        // window.completionStatus agora é gerenciado pelo Firebase
+        window.completionStatus = {};
         
         let bomCache = new Map();
         let G_FILTERED_PENDING_ITEMS = [];
         let G_DASHBOARD_DATA = [];
 
+        // === FUNÇÃO DE ADMINISTRAÇÃO (SEGURANÇA SIMPLES) ===
+        // Função de hash simples para não deixar a senha em texto plano
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = (hash << 5) - hash + char;
+                hash = hash & hash; // Converte para inteiro 32bit
+            }
+            return hash;
+        }
+
+        function toggleAdmin() {
+            if (window.isAdmin) {
+                window.isAdmin = false;
+                updateAdminUI();
+                alert("Você saiu do modo administrador.");
+            } else {
+                const senha = prompt("Digite a senha de administrador:");
+                if (senha) {
+                    // Hash de 'pcp' é 110813
+                    if (simpleHash(senha) === 110813) {
+                        window.isAdmin = true;
+                        updateAdminUI();
+                    } else {
+                        alert("Senha incorreta.");
+                    }
+                }
+            }
+            renderDetailTable(G_FILTERED_PENDING_ITEMS);
+        }
+
+        function updateAdminUI() {
+            const btn = document.getElementById('admin-btn');
+            if (window.isAdmin) {
+                btn.className = 'admin-status admin-unlocked';
+                btn.innerHTML = '<i class="fas fa-unlock mr-2"></i> Acesso: Admin (PCP)';
+            } else {
+                btn.className = 'admin-status admin-locked';
+                btn.innerHTML = '<i class="fas fa-lock mr-2"></i> Acesso: Visitante';
+            }
+        }
         
         function formatNumber(num, decimals = 0) {
             if (typeof num !== 'number' || isNaN(num)) return '0';
@@ -488,12 +509,12 @@
              adjustedStockItems.forEach(item => {
                 const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
                  if (!carteiraAgrupada[key] && (item.Pecas_Estoque_Liquido > 0 || item.M3_Estoque_Liquido > 0.001)) {
-                      dashboardData.push({
-                            Produto: item.Produto, Perfil: item.Perfil, M3_Carteira_Volume: 0, M3_Estoque_Liquido: item.M3_Estoque_Liquido,
-                            Pacotes_Carteira: 0, Pacotes_Estoque: Math.floor(item.Pecas_Estoque_Liquido / getPecasPorPacote(item.Perfil)),
-                            M3_A_Produzir: 0, Pacotes_A_Produzir: 0,
-                      });
-                 }
+                       dashboardData.push({
+                             Produto: item.Produto, Perfil: item.Perfil, M3_Carteira_Volume: 0, M3_Estoque_Liquido: item.M3_Estoque_Liquido,
+                             Pacotes_Carteira: 0, Pacotes_Estoque: Math.floor(item.Pecas_Estoque_Liquido / getPecasPorPacote(item.Perfil)),
+                             M3_A_Produzir: 0, Pacotes_A_Produzir: 0,
+                       });
+                  }
             });
              dashboardData.sort((a, b) => { const pc = (a.Produto || '').localeCompare(b.Produto || ''); return pc !== 0 ? pc : (a.Perfil || '').localeCompare(b.Perfil || ''); });
             
@@ -540,10 +561,8 @@
                 const pm3 = cm3 ? ' pulse-red' : '';
                 const ppct = cpct ? ' pulse-red' : '';
                 
-                // Lógica do botão [+]
                 let toggleIcon = '';
                 if (am3 > 0.001) {
-                    // Chama a nova função showMRPModal
                     toggleIcon = `<span class="mrp-toggle-icon" 
                                         onclick="showMRPModal('${item.Produto}', '${item.Perfil}')">
                                       +
@@ -571,19 +590,37 @@
                if (filteredItems.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">${(selectedPOs.size === 0 && uniquePOs.length > 0) ? 'Nenhuma PO selecionada.' : 'Nenhum item encontrado.'}</td></tr>`; emptyMsg.style.display = 'block'; renderCompletedPOScroller([]); return; }
                emptyMsg.style.display = 'none';
                const poStatusMap = {}; const poCompletionState = {}; const completedPOs = [];
-               filteredItems.forEach(item => { const po = item.PO || 'na'; const itemId = generateItemId(item); if (!poStatusMap[po]) poStatusMap[po] = { total: 0, completed: 0 }; poStatusMap[po].total++; if (completionStatus[itemId] === true) poStatusMap[po].completed++; });
+               filteredItems.forEach(item => { const po = item.PO || 'na'; const itemId = generateItemId(item); if (!poStatusMap[po]) poStatusMap[po] = { total: 0, completed: 0 }; poStatusMap[po].total++; if (window.completionStatus[itemId] === true) poStatusMap[po].completed++; });
                for (const po in poStatusMap) { if (poStatusMap[po].completed === 0) poCompletionState[po] = 'pending'; else if (poStatusMap[po].completed === poStatusMap[po].total) {poCompletionState[po] = 'full'; completedPOs.push(po);} else poCompletionState[po] = 'partial'; }
                completedPOs.sort();
             filteredItems.sort((a, b) => { const pc = (a.PO || '').localeCompare(b.PO || ''); return pc !== 0 ? pc : (a.Produto || '').localeCompare(b.Produto || ''); });
+            
             filteredItems.forEach(item => {
-                const itemId = generateItemId(item); const isItemCompleted = completionStatus[itemId] === true; const poState = poCompletionState[item.PO || 'na'];
+                const itemId = generateItemId(item); 
+                const isItemCompleted = window.completionStatus[itemId] === true; 
+                const poState = poCompletionState[item.PO || 'na'];
+                
                 const emCarteiraPct = Math.round((item.Pendente_Pecas || 0) / getPecasPorPacote(item.Perfil)); const emCarteiraM3 = item.Pendente_M3 || 0;
                 let rowClass = ''; let poIndicatorIcon = '';
                 if (poState === 'full') { rowClass = 'completed-row'; poIndicatorIcon = '<span class="po-status-icon po-status-completed">✓</span>'; }
                 else if (poState === 'partial') { poIndicatorIcon = '<span class="po-status-icon po-status-partial">⚠️</span>'; if (isItemCompleted) rowClass = 'completed-row';}
                 else { if (isItemCompleted) rowClass = 'completed-row'; }
+                
+                // Lógica de Bloqueio do Checkbox
+                const isDisabled = window.isAdmin ? '' : 'disabled';
+                
                 tbody.innerHTML += `
-                        <tr class="${rowClass}" data-item-id="${itemId}"> <td class="text-center"><input type="checkbox" class="form-checkbox h-4 w-4" ${isItemCompleted ? 'checked' : ''} onchange="toggleItemCompletion(this)"></td> <td>${item.PO || 'N/A'}${poIndicatorIcon}</td> <td>${item.Cliente || 'N/A'}</td> <td>${item.Perfil || 'N/A'}</td> <td>${item.Produto || 'N/A'}</td> <td>${formatPct(emCarteiraPct)}</td> <td>${formatM3(emCarteiraM3)}</td> </tr>`;
+                        <tr class="${rowClass}" data-item-id="${itemId}"> 
+                            <td class="text-center">
+                                <input type="checkbox" class="form-checkbox h-4 w-4" ${isItemCompleted ? 'checked' : ''} ${isDisabled} onchange="toggleItemCompletion(this)">
+                            </td> 
+                            <td>${item.PO || 'N/A'}${poIndicatorIcon}</td> 
+                            <td>${item.Cliente || 'N/A'}</td> 
+                            <td>${item.Perfil || 'N/A'}</td> 
+                            <td>${item.Produto || 'N/A'}</td> 
+                            <td>${formatPct(emCarteiraPct)}</td> 
+                            <td>${formatM3(emCarteiraM3)}</td> 
+                        </tr>`;
             });
                renderCompletedPOScroller(completedPOs);
         }
@@ -594,11 +631,7 @@
         }
 
 
-        // ---
-        // =================================================================
-        // --- LÓGICA DO MRP I (v1.8.2 - autoTable PDF) ---
-        // =================================================================
-        // ---
+        // --- MRP I ---
         
         function getItemKey(item) {
             const p = item.Produto || 'N/A';
@@ -612,7 +645,6 @@
         function buildBomCache(bomData) {
             bomCache.clear();
             if (!bomData) return;
-            
             bomData.forEach(item => {
                 const bomItem = {
                     Produto: item.Produto, Perfil: item.Perfil,
@@ -622,13 +654,9 @@
                     Tipo_Insumo: item.Tipo_Insumo
                 };
                 const key = getItemKey(bomItem);
-                
-                if (!bomCache.has(key)) {
-                    bomCache.set(key, []);
-                }
+                if (!bomCache.has(key)) { bomCache.set(key, []); }
                 bomCache.get(key).push(bomItem);
             });
-            console.log(`[MRP] Cache da BOM construído com ${bomCache.size} receitas únicas.`);
         }
         
         function getRecipe(item) {
@@ -638,13 +666,10 @@
 
         function calculateMRPForProduct(produto, perfil) {
             const mpsItem = G_DASHBOARD_DATA.find(d => d.Produto === produto && d.Perfil === perfil);
-            if (!mpsItem || mpsItem.M3_A_Produzir <= 0.001) {
-                return {}; 
-            }
+            if (!mpsItem || mpsItem.M3_A_Produzir <= 0.001) { return {}; }
 
             const m3TotalCarteira = mpsItem.M3_Carteira_Volume;
             const m3TotalAProduzir = mpsItem.M3_A_Produzir;
-            
             const necessidadesAgregadas = {};
 
             const pendingItemsForProduct = G_FILTERED_PENDING_ITEMS.filter(item => 
@@ -654,9 +679,7 @@
             
             pendingItemsForProduct.forEach(item => {
                 let proporcaoItem = 0;
-                if (m3TotalCarteira > 0.001) {
-                    proporcaoItem = (item.Pendente_M3 || 0) / m3TotalCarteira;
-                }
+                if (m3TotalCarteira > 0.001) { proporcaoItem = (item.Pendente_M3 || 0) / m3TotalCarteira; }
                 const m3ItemAProduzir = m3TotalAProduzir * proporcaoItem;
                 
                 if (m3ItemAProduzir > 0) {
@@ -665,122 +688,65 @@
                         const componente = bomItem.Componente;
                         const consumoM3 = bomItem.Consumo_M3 || 0;
                         const necessidadeBruta = m3ItemAProduzir * consumoM3;
-                        
                         if (!necessidadesAgregadas[componente]) {
-                            necessidadesAgregadas[componente] = {
-                                necessidade: 0,
-                                unidade: bomItem.Unidade_Medida || 'N/A',
-                                tipo: bomItem.Tipo_Insumo || 'N/A'
-                            };
+                            necessidadesAgregadas[componente] = { necessidade: 0, unidade: bomItem.Unidade_Medida || 'N/A', tipo: bomItem.Tipo_Insumo || 'N/A' };
                         }
                         necessidadesAgregadas[componente].necessidade += necessidadeBruta;
                     });
                 }
             });
-            
             return necessidadesAgregadas;
         }
 
-        /**
-         * NOVO: Calcula MRP Global (soma de todos os itens do Dashboard)
-         */
         function calculateGlobalMRP() {
             const globalNecessities = {};
-
-            // Itera sobre todos os itens do Dashboard que precisam ser produzidos
             G_DASHBOARD_DATA.forEach(mpsItem => {
                 const m3AProduzir = mpsItem.M3_A_Produzir || 0;
-                
                 if (m3AProduzir > 0.001) {
-                    // Reutiliza a lógica existente para calcular os insumos deste produto
                     const productNecessities = calculateMRPForProduct(mpsItem.Produto, mpsItem.Perfil);
-                    
-                    // Agrega os resultados no objeto global
                     for (const [componente, data] of Object.entries(productNecessities)) {
                         if (!globalNecessities[componente]) {
-                            globalNecessities[componente] = {
-                                necessidade: 0,
-                                unidade: data.unidade,
-                                tipo: data.tipo
-                            };
+                            globalNecessities[componente] = { necessidade: 0, unidade: data.unidade, tipo: data.tipo };
                         }
                         globalNecessities[componente].necessidade += data.necessidade;
                     }
                 }
             });
-
             return globalNecessities;
         }
 
         function generateMRPTableHTML(necessidades) {
             const componentes = Object.keys(necessidades);
-            if (componentes.length === 0) {
-                return `<div class="p-4 text-center text-gray-400">Nenhum insumo encontrado na BOM para os itens a produzir.</div>`;
-            }
-
-            // O ID 'mrp-export-table' é usado pelo jsPDF-autoTable
+            if (componentes.length === 0) { return `<div class="p-4 text-center text-gray-400">Nenhum insumo encontrado na BOM para os itens a produzir.</div>`; }
             let tableHTML = `
                 <table class="mrp-table-modal" id="mrp-export-table">
-                    <thead>
-                        <tr>
-                            <th>INSUMOS</th>
-                            <th>TIPO</th>
-                            <th>UNIDADE</th>
-                            <th>NECESSIDADE</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>INSUMOS</th><th>TIPO</th><th>UNIDADE</th><th>NECESSIDADE</th></tr></thead>
                     <tbody>
             `;
-            
             componentes.sort();
             componentes.forEach(componente => {
                 const item = necessidades[componente];
-
-                // LÓGICA DE FORMATAÇÃO CORRIGIDA:
                 let decimals = 3;
                 const tipo = (item.tipo || '').toUpperCase();
                 const unidade = (item.unidade || '').toUpperCase();
-
-                if (tipo.includes('EMBALAGEM')) {
-                    decimals = 3;
-                } else if (unidade === 'UN' || unidade === 'UD') {
-                    decimals = 0;
-                }
-
+                if (tipo.includes('EMBALAGEM')) { decimals = 3; } else if (unidade === 'UN' || unidade === 'UD') { decimals = 0; }
                 const formatoNumero = formatNumber(item.necessidade, decimals);
-                
-                tableHTML += `
-                    <tr>
-                        <td>${componente}</td>
-                        <td>${item.tipo}</td>
-                        <td>${item.unidade}</td>
-                        <td class="highlight-red">${formatoNumero}</td>
-                    </tr>
-                `;
+                tableHTML += `<tr><td>${componente}</td><td>${item.tipo}</td><td>${item.unidade}</td><td class="highlight-red">${formatoNumero}</td></tr>`;
             });
-
             tableHTML += `</tbody></table>`;
             return tableHTML;
         }
 
-        /**
-         * FUNÇÕES DO MODAL (POPUP)
-         */
         window.showMRPModal = function(produto, perfil) {
             const overlay = document.getElementById('mrp-modal-overlay');
             const modal = document.getElementById('mrp-modal-container');
             const title = document.getElementById('mrp-modal-title');
             const content = document.getElementById('mrp-modal-content');
-
-            // Define o título e o estado de loading
-            title.textContent = `MRP I - INSUMOS DO ${produto} - ${perfil }`.toUpperCase();
+            title.textContent = `MRP I - INSUMOS DO ${produto} - ${perfil}`.toUpperCase();
             content.innerHTML = `<p class="text-center text-gray-400 py-4">Calculando necessidade...</p>`;
-
             overlay.style.display = 'block';
             modal.style.display = 'flex'; 
-            
             setTimeout(() => {
-                console.log(`[MRP Modal] Calculando para: ${produto} | ${perfil}`);
                 const necessidades = calculateMRPForProduct(produto, perfil);
                 const tableHTML = generateMRPTableHTML(necessidades);
                 content.innerHTML = tableHTML;
@@ -788,221 +754,75 @@
         }
 
         window.hideMRPModal = function() {
-            const overlay = document.getElementById('mrp-modal-overlay');
-            const modal = document.getElementById('mrp-modal-container');
-            const content = document.getElementById('mrp-modal-content');
-
-            overlay.style.display = 'none';
-            modal.style.display = 'none';
-            
-            content.innerHTML = ''; 
+            document.getElementById('mrp-modal-overlay').style.display = 'none';
+            document.getElementById('mrp-modal-container').style.display = 'none';
+            document.getElementById('mrp-modal-content').innerHTML = ''; 
         }
         
-        /**
-         * FUNÇÃO PDF INDIVIDUAL (Modal)
-         */
         function exportMRPToPDF() {
-            console.log("Iniciando exportação PDF (Individual)...");
             const { jsPDF } = window.jspdf;
-            
             const modalTitleEl = document.getElementById('mrp-modal-title');
-            const tableEl = document.getElementById('mrp-export-table');
             const exportButton = document.getElementById('export-mrp-pdf');
-
-            if (!tableEl || !modalTitleEl) {
-                alert("Erro: Não foi possível encontrar a tabela para exportar.");
-                return;
-            }
-            
             generatePDFWithAutoTable(jsPDF, modalTitleEl.textContent, '#mrp-export-table', exportButton);
         }
 
-        /**
-         * NOVO: FUNÇÃO PDF GLOBAL (Botão do Dashboard)
-         */
         function exportGlobalMRPToPDF() {
-            console.log("Iniciando exportação PDF (Global)...");
             const { jsPDF } = window.jspdf;
             const exportButton = document.getElementById('btn-global-mrp-pdf');
-            
-            // 1. Calcula dados globais
             const necessidadesGlobais = calculateGlobalMRP();
-            
-            // 2. Gera HTML temporário da tabela (invisível) para o autoTable ler
-            // Precisamos criar um elemento temporário no DOM ou passar os dados direto.
-            // Para manter a consistência com a formatação, vamos criar o HTML e usar o parse do autoTable.
             const tableHTML = generateMRPTableHTML(necessidadesGlobais);
-            
-            // Cria um container invisível
             const tempDiv = document.createElement('div');
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.left = '-9999px';
-            tempDiv.innerHTML = tableHTML;
+            tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px'; tempDiv.innerHTML = tableHTML;
             document.body.appendChild(tempDiv);
-            
-            // Pega o ID da tabela gerada
-            const tableId = '#mrp-export-table'; // generateMRPTableHTML usa esse ID
-            
-            // Gera o PDF
-            const title = "LISTA DE COMPRAS CONSOLIDADA (MRP GLOBAL)";
-            generatePDFWithAutoTable(jsPDF, title, tableEl = tempDiv.querySelector('table'), exportButton, () => {
-                // Cleanup: remove o elemento temporário
+            generatePDFWithAutoTable(jsPDF, "LISTA DE COMPRAS CONSOLIDADA (MRP GLOBAL)", tempDiv.querySelector('table'), exportButton, () => {
                 document.body.removeChild(tempDiv);
             });
         }
 
-        /**
-         * Helper Genérico para gerar PDF
-         */
         function generatePDFWithAutoTable(jsPDF, titleText, tableInput, buttonElement, callback) {
             const originalButtonText = buttonElement.innerHTML;
-            buttonElement.innerHTML = "Gerando PDF...";
-            buttonElement.disabled = true;
-
+            buttonElement.innerHTML = "Gerando PDF..."; buttonElement.disabled = true;
             try {
                 const doc = new jsPDF('p', 'mm', 'a4');
-                const margin = 15;
-                let startY = margin + 12;
-
-                // Adiciona o Título
-                doc.setFontSize(14);
-                doc.setTextColor('#0D1117'); 
-                doc.text(titleText, margin, startY);
-                
-                startY += 6; 
-
-                // Adiciona Data e Filtros Ativos (se houver)
-                doc.setFontSize(9);
-                doc.setTextColor('#30363D'); 
-                doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, margin, startY);
-                
-                // Se for o global, pode ser interessante mostrar quantas POs estão selecionadas
-                if(titleText.includes("GLOBAL")) {
-                    startY += 5;
-                    const qtdPos = selectedPOs.size > 0 ? selectedPOs.size : "Todas";
-                    doc.text(`Filtro POs: ${qtdPos} pedidos selecionados`, margin, startY);
-                }
-                
+                const margin = 15; let startY = margin + 12;
+                doc.setFontSize(14); doc.setTextColor('#0D1117'); doc.text(titleText, margin, startY); startY += 6; 
+                doc.setFontSize(9); doc.setTextColor('#30363D'); doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, margin, startY);
+                if(titleText.includes("GLOBAL")) { startY += 5; const qtdPos = selectedPOs.size > 0 ? selectedPOs.size : "Todas"; doc.text(`Filtro POs: ${qtdPos} pedidos selecionados`, margin, startY); }
                 startY += 8; 
-
-                // Gera a tabela
                 doc.autoTable({
-                    html: tableInput, // Pode ser seletor string ou Elemento HTML
-                    startY: startY,
-                    margin: { left: margin, right: margin },
-                    theme: 'grid',
-                    styles: {
-                        fillColor: '#F3F4F6',
-                        textColor: '#1F2937',
-                        lineColor: '#D1D5DB',
-                        lineWidth: 0.1,
-                        fontSize: 9
-                    },
-                    headStyles: {
-                        fillColor: 'black', // Verde para combinar com o botão Global
-                        textColor: '#FFFFFF',
-                        fontStyle: 'bold',
-                    },
-                    didParseCell: function (data) {
-                        if (data.column.dataKey === 3) { // Coluna Necessidade
-                            data.cell.styles.textColor = '#DC2626';
-                            data.cell.styles.fontStyle = 'bold';
-                        }
-                    }
+                    html: tableInput, startY: startY, margin: { left: margin, right: margin }, theme: 'grid',
+                    styles: { fillColor: '#F3F4F6', textColor: '#1F2937', lineColor: '#D1D5DB', lineWidth: 0.1, fontSize: 9 },
+                    headStyles: { fillColor: 'black', textColor: '#FFFFFF', fontStyle: 'bold', },
+                    didParseCell: function (data) { if (data.column.dataKey === 3) { data.cell.styles.textColor = '#DC2626'; data.cell.styles.fontStyle = 'bold'; } }
                 });
-                
-                const fileName = `Relatorio_${titleText.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-                doc.save(fileName);
-
-            } catch (e) {
-                console.error("Erro ao gerar PDF:", e);
-                alert("Ocorreu um erro ao gerar o PDF.");
-            } finally {
-                buttonElement.innerHTML = originalButtonText;
-                buttonElement.disabled = false;
-                if(callback) callback();
-            }
+                doc.save(`Relatorio_${titleText.replace(/[^a-z0-9]/gi, '_')}.pdf`);
+            } catch (e) { alert("Ocorreu um erro ao gerar o PDF."); } finally { buttonElement.innerHTML = originalButtonText; buttonElement.disabled = false; if(callback) callback(); }
         }
 
-
-        // --- Funções de Interação ---
-        function selectAllPOs() {
-             const poSelect = document.getElementById('po-select'); selectedPOs.clear();
-             for (let i = 0; i < poSelect.options.length; i++) { poSelect.options[i].selected = true; selectedPOs.add(poSelect.options[i].value); }
-             poSelect.dispatchEvent(new Event('change'));
-             updateDashboardAndDetail();
-        }
-        function clearAllPOs() {
-            const poSelect = document.getElementById('po-select');
-            for (let i = 0; i < poSelect.options.length; i++) poSelect.options[i].selected = false;
-               selectedPOs.clear(); poSelect.dispatchEvent(new Event('change'));
-               updateDashboardAndDetail();
-        }
-        function handleMainPOSelectionChange() {
-            const poSelect = document.getElementById('po-select'); selectedPOs.clear();
-            for (let i = 0; i < poSelect.selectedOptions.length; i++) selectedPOs.add(poSelect.selectedOptions[i].value);
-            updateDashboardAndDetail();
-        }
-        function selectAllPOsReserva() {
-             const poSelect = document.getElementById('po-select-reserva'); reservedPOs.clear();
-             for (let i = 0; i < poSelect.options.length; i++) { poSelect.options[i].selected = true; reservedPOs.add(poSelect.options[i].value); }
-             poSelect.dispatchEvent(new Event('change'));
-             updateDashboardAndDetail();
-        }
-        function clearAllPOsReserva() {
-            const poSelect = document.getElementById('po-select-reserva');
-            for (let i = 0; i < poSelect.options.length; i++) poSelect.options[i].selected = false;
-               reservedPOs.clear(); poSelect.dispatchEvent(new Event('change'));
-               updateDashboardAndDetail();
-        }
-        function handleReservationSelectionChange() {
-            const poSelect = document.getElementById('po-select-reserva'); reservedPOs.clear();
-            for (let i = 0; i < poSelect.selectedOptions.length; i++) reservedPOs.add(poSelect.selectedOptions[i].value);
-            updateDashboardAndDetail();
-        }
+        // --- Interações ---
+        function selectAllPOs() { const poSelect = document.getElementById('po-select'); selectedPOs.clear(); for (let i = 0; i < poSelect.options.length; i++) { poSelect.options[i].selected = true; selectedPOs.add(poSelect.options[i].value); } poSelect.dispatchEvent(new Event('change')); updateDashboardAndDetail(); }
+        function clearAllPOs() { const poSelect = document.getElementById('po-select'); for (let i = 0; i < poSelect.options.length; i++) poSelect.options[i].selected = false; selectedPOs.clear(); poSelect.dispatchEvent(new Event('change')); updateDashboardAndDetail(); }
+        function handleMainPOSelectionChange() { const poSelect = document.getElementById('po-select'); selectedPOs.clear(); for (let i = 0; i < poSelect.selectedOptions.length; i++) selectedPOs.add(poSelect.selectedOptions[i].value); updateDashboardAndDetail(); }
+        function selectAllPOsReserva() { const poSelect = document.getElementById('po-select-reserva'); reservedPOs.clear(); for (let i = 0; i < poSelect.options.length; i++) { poSelect.options[i].selected = true; reservedPOs.add(poSelect.options[i].value); } poSelect.dispatchEvent(new Event('change')); updateDashboardAndDetail(); }
+        function clearAllPOsReserva() { const poSelect = document.getElementById('po-select-reserva'); for (let i = 0; i < poSelect.options.length; i++) poSelect.options[i].selected = false; reservedPOs.clear(); poSelect.dispatchEvent(new Event('change')); updateDashboardAndDetail(); }
+        function handleReservationSelectionChange() { const poSelect = document.getElementById('po-select-reserva'); reservedPOs.clear(); for (let i = 0; i < poSelect.selectedOptions.length; i++) reservedPOs.add(poSelect.selectedOptions[i].value); updateDashboardAndDetail(); }
 
         function updateDashboardAndDetail() {
-             console.log("[DEBUG] Atualizando. POs Filtro Principal:", selectedPOs);
-             console.log("[DEBUG] Atualizando. POs Filtro Reserva:", reservedPOs);
-             if (!ALL_PENDING_ITEMS || !ALL_STOCK_ITEMS) { console.warn("[DEBUG] Dados ainda não carregados."); renderDashboard([]); renderDetailTable([]); return; }
-             
+             if (!ALL_PENDING_ITEMS || !ALL_STOCK_ITEMS) return;
              const filteredItemsEmCarteira = ALL_PENDING_ITEMS.filter(item => { const poValue = item && item.PO ? String(item.PO) : null; return poValue && selectedPOs.has(poValue); });
-             console.log("[DEBUG] Itens filtrados (Detalhe):", filteredItemsEmCarteira);
-             
              G_FILTERED_PENDING_ITEMS = filteredItemsEmCarteira;
-
              const itemsAReservar = ALL_PENDING_ITEMS.filter(item => { const poValue = item && item.PO ? String(item.PO) : null; return poValue && reservedPOs.has(poValue); });
-             
              const reservedStockSummary = itemsAReservar.reduce((acc, item) => { const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`; if (!acc[key]) acc[key] = { Pecas_Reservadas: 0, M3_Reservados: 0 }; acc[key].Pecas_Reservadas += item.Pendente_Pecas || 0; acc[key].M3_Reservados += item.Pendente_M3 || 0; return acc; }, {});
-             console.log("[DEBUG] Itens reservados:", reservedStockSummary);
-             
-             const adjustedStockMap = new Map();
-             
              const adjustedStockItems = ALL_STOCK_ITEMS.map(stockItem => {
-                 const key = `${stockItem.Produto || 'N/A'}|${stockItem.Perfil || 'N/A'}`;
-                 const reserva = reservedStockSummary[key];
-                 let M3_Estoque_Liquido = stockItem.M3_Estoque_Liquido || 0;
-                 let Pecas_Estoque_Liquido = stockItem.Pecas_Estoque_Liquido || 0;
-                 
-                 if (reserva) {
-                     M3_Estoque_Liquido -= reserva.M3_Reservados;
-                     Pecas_Estoque_Liquido -= reserva.Pecas_Reservadas;
-                 }
-                 
-                 const adjustedItem = { ...stockItem, M3_Estoque_Liquido, Pecas_Estoque_Liquido };
-                 adjustedStockMap.set(key, adjustedItem); 
-                 return adjustedItem;
+                 const key = `${stockItem.Produto || 'N/A'}|${stockItem.Perfil || 'N/A'}`; const reserva = reservedStockSummary[key]; let M3_Estoque_Liquido = stockItem.M3_Estoque_Liquido || 0; let Pecas_Estoque_Liquido = stockItem.Pecas_Estoque_Liquido || 0;
+                 if (reserva) { M3_Estoque_Liquido -= reserva.M3_Reservados; Pecas_Estoque_Liquido -= reserva.Pecas_Reservadas; }
+                 return { ...stockItem, M3_Estoque_Liquido, Pecas_Estoque_Liquido };
              });
-             console.log("[DEBUG] Estoque Ajustado (Dashboard):", adjustedStockItems);
-             
              const dashboardData = calcularDashboard(filteredItemsEmCarteira, adjustedStockItems);
-             console.log("[DEBUG] Dados Dashboard:", dashboardData);
-             
              renderDashboard(dashboardData);
              renderDetailTable(filteredItemsEmCarteira);
         }
 
-        // --- Funções de Conclusão (localStorage) ---
         function generateItemId(item) {
              const po = (item.PO || 'na').replace(/[.\#$[\]/]/g, '_');
              const cli = (item.Cliente || 'na').replace(/[.\#$[\]/]/g, '_');
@@ -1013,38 +833,44 @@
              const c = (item.Comprimento || 0).toFixed(5);
              return `${po}|${cli}|${perf}|${prod}|${e}|${l}|${c}`;
          }
-        
-        function loadCompletionStatus() {
-             try { const stored = localStorage.getItem(STORAGE_KEY); completionStatus = stored ? JSON.parse(stored) : {}; console.log("Status carregado (localStorage):", completionStatus); }
-             catch (e) { console.error("Erro load status:", e); completionStatus = {}; }
-        }
-         function saveCompletionStatus() {
-             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(completionStatus)); console.log("Status salvo (localStorage):", completionStatus); }
-             catch (e) { console.error("Erro save status:", e); }
-         }
+
+        // --- LÓGICA DE CHECKBOX DO FIREBASE ---
         window.toggleItemCompletion = function(checkboxElement) {
-             const row = checkboxElement.closest('tr'); const itemId = row.getAttribute('data-item-id'); const isChecked = checkboxElement.checked;
+             const row = checkboxElement.closest('tr'); 
+             const itemId = row.getAttribute('data-item-id'); 
+             const isChecked = checkboxElement.checked;
              const po = itemId.split('|')[0];
+             
              if (!itemId || po === 'na') { console.error("ID inválido:", itemId); return; }
-             completionStatus[itemId] = isChecked; 
-             saveCompletionStatus(); 
-             updatePOVisualStatus(po); 
-             console.log(`Item ${itemId} marcado ${isChecked}`);
+             
+             // Atualiza visualmente imediatamente (otimismo)
+             window.completionStatus[itemId] = isChecked;
+             window.updatePOVisualStatus(po);
+             
+             // Envia para o banco de dados
+             window.saveItemStatusToCloud(itemId, isChecked);
         }
         
+        // Função para atualizar visual quando chega dado do banco
+        window.updateAllVisuals = function() {
+            // Re-renderiza a tabela atual para refletir novos status
+            renderDetailTable(G_FILTERED_PENDING_ITEMS);
+            // Atualiza barra de rolagem
+            recalculateAndRenderScroller();
+        }
         
         window.updatePOVisualStatus = function(po) {
              const tbody = document.getElementById('detail-table').querySelector('tbody');
              const rowsForPO = tbody.querySelectorAll(`tr[data-item-id^="${po}|"]`);
              if (rowsForPO.length === 0) { recalculateAndRenderScroller(); return; }
              let total = 0; let completed = 0;
-             rowsForPO.forEach(r => { total++; const id = r.getAttribute('data-item-id'); if (completionStatus[id] === true) completed++; });
+             rowsForPO.forEach(r => { total++; const id = r.getAttribute('data-item-id'); if (window.completionStatus[id] === true) completed++; });
              let state = 'pending'; let icon = '';
              if (completed === 0) state = 'pending';
              else if (completed === total) { state = 'full'; icon = '<span class="po-status-icon po-status-completed">✓</span>';}
              else { state = 'partial'; icon = '<span class="po-status-icon po-status-partial">⚠️</span>';}
              rowsForPO.forEach(r => {
-                 const poCell = r.cells[1]; const itemId = r.getAttribute('data-item-id'); const isItemDone = completionStatus[itemId] === true;
+                 const poCell = r.cells[1]; const itemId = r.getAttribute('data-item-id'); const isItemDone = window.completionStatus[itemId] === true;
                  const poText = itemId.split('|')[0]; 
                  r.classList.remove('completed-row'); const existingIcon = poCell.querySelector('.po-status-icon'); if (existingIcon) existingIcon.remove();
                  poCell.textContent = poText;
@@ -1054,25 +880,31 @@
              });
              recalculateAndRenderScroller();
         }
+        
         window.recalculateAndRenderScroller = function() {
              const completedPOsList = [];
              const allItemsByPO = ALL_PENDING_ITEMS.reduce((acc, item) => { const po = item.PO || 'na'; if (po === 'na') return acc; if (!acc[po]) acc[po] = []; acc[po].push(item); return acc; }, {});
-             
              for (const po in allItemsByPO) {
                  const items = allItemsByPO[po]; let allDone = true;
                  if (items.length === 0) allDone = false;
-                 else { for (const item of items) { const id = generateItemId(item); if (completionStatus[id] !== true) { allDone = false; break; }}}
+                 else { for (const item of items) { const id = generateItemId(item); if (window.completionStatus[id] !== true) { allDone = false; break; }}}
                  if (allDone) completedPOsList.push(po);
              }
              completedPOsList.sort(); renderCompletedPOScroller(completedPOsList);
         }
 
-
-        
+        // --- CARREGAMENTO DE DADOS REAIS ---
         function carregarScriptDados() {
-            const globalStatus = document.getElementById('global-status'); const dataStatus = document.getElementById('data-status'); const lastUpdated = document.getElementById('data-last-updated');
-            globalStatus.textContent = `Carregando ${CAMINHO_JS}...`; globalStatus.className = 'status-box status-loading'; globalStatus.style.opacity = '1'; if (globalStatusTimeout) clearTimeout(globalStatusTimeout);
-            dataStatus.textContent = 'Carregando...'; lastUpdated.textContent = '';
+            const globalStatus = document.getElementById('global-status'); 
+            const dataStatus = document.getElementById('data-status'); 
+            const lastUpdated = document.getElementById('data-last-updated');
+            
+            globalStatus.textContent = `Carregando ${CAMINHO_JS}...`; 
+            globalStatus.className = 'status-box status-loading'; 
+            globalStatus.style.opacity = '1'; 
+            if (globalStatusTimeout) clearTimeout(globalStatusTimeout);
+            dataStatus.textContent = 'Carregando...'; 
+            lastUpdated.textContent = '';
             
             const scriptAntigo = document.getElementById('script-dados'); if (scriptAntigo) scriptAntigo.remove();
             const ts = new Date().getTime(); const src = `${CAMINHO_JS}?v=${ts}`;
@@ -1121,7 +953,6 @@
             };
             
             scriptNovo.onerror = (e) => {
-                 
                 globalStatus.textContent = `ERRO: Falha ao carregar '${CAMINHO_JS}'. Verifique o console.`; 
                 globalStatus.className = 'status-box status-error'; 
                 globalStatus.style.opacity = '1';
@@ -1145,9 +976,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             const poSelect = document.getElementById('po-select');
             const poSelectReserva = document.getElementById('po-select-reserva');
-
-            loadCompletionStatus();
-            carregarScriptDados();
+            
+            // Carrega os dados chamando o script externo
+            carregarScriptDados(); 
 
             document.getElementById('reload-button').addEventListener('click', carregarScriptDados);
             document.getElementById('select-all-po').addEventListener('click', selectAllPOs);
@@ -1155,10 +986,7 @@
             document.getElementById('select-all-po-reserva').addEventListener('click', selectAllPOsReserva);
             document.getElementById('clear-all-po-reserva').addEventListener('click', clearAllPOsReserva);
 
-            // --- EVENTOS PDF ---
-            // Botão do Modal (Individual)
             document.getElementById('export-mrp-pdf').addEventListener('click', exportMRPToPDF);
-            // NOVO: Botão do Dashboard (Global)
             document.getElementById('btn-global-mrp-pdf').addEventListener('click', exportGlobalMRPToPDF);
 
              const handleInteraction = (event) => {
@@ -1172,25 +1000,13 @@
                       requestAnimationFrame(() => { selectElement.scrollTop = currentScrollTop; });
                  }
              };
-
              poSelect.addEventListener('mousedown', handleInteraction);
              poSelect.addEventListener('touchstart', handleInteraction, { passive: false });
              poSelect.addEventListener('change', handleMainPOSelectionChange);
-
              poSelectReserva.addEventListener('mousedown', handleInteraction);
              poSelectReserva.addEventListener('touchstart', handleInteraction, { passive: false });
              poSelectReserva.addEventListener('change', handleReservationSelectionChange);
         });
-
-        
-        window.toggleItemCompletion = toggleItemCompletion;
-        window.updatePOVisualStatus = updatePOVisualStatus;
-        window.recalculateAndRenderScroller = recalculateAndRenderScroller;
-
-
     </script>
-
 </body>
 </html>
-
-
