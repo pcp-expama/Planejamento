@@ -9,16 +9,18 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- BIBLIOTECAS PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- FIREBASE (CONEXÃO) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, deleteDoc, onSnapshot, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- SUAS CHAVES REAIS ---
         const firebaseConfig = {
@@ -39,10 +41,15 @@
 
         window.isAdmin = false;
         
+        // Dados globais de produção para filtro
+        let ALL_PRODUCAO_DATA = [];
+        let chartInstance = null; // Variável para controlar o gráfico
+
         // Login
         signInAnonymously(auth).then(() => {
             console.log("Firebase: Login ok.");
             iniciarEscutaEmTempoReal();
+            iniciarEscutaProducao();
         }).catch((error) => {
             console.error("Firebase: Erro login.", error);
             const el = document.getElementById('data-status');
@@ -58,94 +65,394 @@
                 onSnapshot(q, (snapshot) => {
                     const novosStatus = {};
                     snapshot.forEach((doc) => { novosStatus[doc.id] = true; });
-                    
                     window.completionStatus = novosStatus;
-                    
-                    if (typeof window.updateAllVisuals === 'function') {
-                        window.updateAllVisuals();
-                    }
+                    if (typeof window.updateAllVisuals === 'function') window.updateAllVisuals();
                     
                     const statusEl = document.getElementById('data-status');
                     if(statusEl) {
                         statusEl.textContent = "• Online";
                         statusEl.className = "text-xs mt-1 text-green-500 font-bold";
                     }
-                }, (error) => {
-                    console.error("Firebase: Erro leitura.", error);
-                    const statusEl = document.getElementById('data-status');
-                    if(statusEl) {
-                        statusEl.textContent = "Erro: Sem Permissão de Leitura";
-                        statusEl.className = "text-xs mt-1 text-red-500 font-bold";
-                    }
                 });
             } catch (e) { console.error("Firebase: Erro fatal.", e); }
         }
 
-        // Função de Salvamento (Unitário)
+        // --- ESCUTA DE PRODUÇÃO ---
+        function iniciarEscutaProducao() {
+            try {
+                const q = query(collection(db, "lancamentos_producao"), orderBy("timestamp", "desc"));
+                
+                onSnapshot(q, (snapshot) => {
+                    ALL_PRODUCAO_DATA = [];
+                    snapshot.forEach((doc) => {
+                        let data = doc.data();
+                        data.id = doc.id; // Guardar ID para exclusão
+                        ALL_PRODUCAO_DATA.push(data);
+                    });
+                    
+                    // Define datas padrão (Mês atual) se estiverem vazias
+                    const dtInicio = document.getElementById('hist-start');
+                    const dtFim = document.getElementById('hist-end');
+                    if(!dtInicio.value) {
+                        const hoje = new Date();
+                        const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+                        dtInicio.valueAsDate = primeiroDia;
+                        dtFim.valueAsDate = hoje;
+                    }
+
+                    window.filtrarProducao();
+                });
+            } catch (e) { console.error("Erro ao ler produção:", e); }
+        }
+
+        window.filtrarProducao = function() {
+            const dtInicioVal = document.getElementById('hist-start').value;
+            const dtFimVal = document.getElementById('hist-end').value;
+            
+            const dadosFiltrados = ALL_PRODUCAO_DATA.filter(item => {
+                if (!item.data) return false;
+                const itemDateStr = item.data; 
+                
+                let valid = true;
+                if (dtInicioVal && itemDateStr < dtInicioVal) valid = false;
+                if (dtFimVal && itemDateStr > dtFimVal) valid = false;
+                
+                return valid;
+            });
+
+            // 1. Agrupar dados para a Tabela (Visual)
+            const dadosAgrupadosTabela = agruparDadosPorDataEProduto(dadosFiltrados);
+            renderizarTabelaProducao(dadosAgrupadosTabela);
+
+            // 2. Agrupar dados para o Gráfico (Total por Produto no período)
+            atualizarGrafico(dadosFiltrados);
+        }
+
+        // --- NOVA FUNÇÃO DE AGRUPAMENTO VISUAL ---
+        function agruparDadosPorDataEProduto(dados) {
+            const mapa = {};
+
+            dados.forEach(item => {
+                // Chave única: Data + Produto
+                const chave = `${item.data}||${item.produto}`;
+                
+                if (!mapa[chave]) {
+                    mapa[chave] = {
+                        data: item.data,
+                        produto: item.produto,
+                        quantidade_pacotes: 0,
+                        volume_m3: 0,
+                        ids_originais: [] // Lista de IDs para permitir exclusão
+                    };
+                }
+
+                mapa[chave].quantidade_pacotes += (item.quantidade_pacotes || 0);
+                
+                let vol = parseFloat(item.volume_m3) || 0;
+                if(typeof item.volume_m3 === 'string' && item.volume_m3.includes('m')) {
+                    vol = parseFloat(item.volume_m3.split(' ')[0]);
+                }
+                mapa[chave].volume_m3 += vol;
+                
+                // Guarda o ID e timestamp para saber qual apagar (o mais recente primeiro, pois a query original já é desc)
+                mapa[chave].ids_originais.push({ id: item.id, timestamp: item.timestamp });
+            });
+
+            return Object.values(mapa).sort((a,b) => b.data.localeCompare(a.data)); // Ordenar por data decrescente
+        }
+
+        function renderizarTabelaProducao(dadosAgrupados) {
+            const tbody = document.getElementById('producao-table-body');
+            tbody.innerHTML = '';
+
+            let totalPcts = 0;
+            let totalM3 = 0;
+            
+            // Data de hoje para verificar permissão de exclusão
+            const hojeIso = new Date().toISOString().split('T')[0];
+
+            if (dadosAgrupados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4 text-xs">Sem registros no período.</td></tr>`;
+            } else {
+                dadosAgrupados.forEach(item => {
+                    totalPcts += item.quantidade_pacotes;
+                    totalM3 += item.volume_m3;
+
+                    const dataFormatada = item.data ? item.data.split('-').reverse().slice(0,2).join('/') : '--/--';
+                    
+                    // Verifica se é hoje para mostrar botão de delete
+                    const isToday = item.data === hojeIso;
+                    const deleteBtn = isToday 
+                        ? `<button onclick='window.tentarExcluirLancamento(${JSON.stringify(item.ids_originais)})' class="text-red-500 hover:text-red-400 ml-2" title="Excluir lançamento de hoje"><i class="fas fa-trash"></i></button>` 
+                        : '';
+
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-white/5 border-b border-white/5 text-xs";
+                    row.innerHTML = `
+                        <td class="p-2">${dataFormatada}</td>
+                        <td class="p-2 truncate max-w-[100px]" title="${item.produto}">${item.produto}</td>
+                        <td class="p-2 text-center font-bold text-white">${item.quantidade_pacotes}</td>
+                        <td class="p-2 text-right">${item.volume_m3.toFixed(3)}</td>
+                        <td class="p-2 text-center">${deleteBtn}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            document.getElementById('total-hist-pcts').textContent = totalPcts;
+            document.getElementById('total-hist-m3').textContent = totalM3.toFixed(3) + ' m³';
+        }
+
+        // --- LÓGICA DO GRÁFICO (CHART.JS) ---
+        function atualizarGrafico(dadosBrutos) {
+            const ctx = document.getElementById('producaoChart').getContext('2d');
+            
+            // Agrupar TOTAL de pacotes por Produto (independente da data filtrada)
+            const totaisPorProduto = {};
+            dadosBrutos.forEach(item => {
+                if(!totaisPorProduto[item.produto]) totaisPorProduto[item.produto] = 0;
+                totaisPorProduto[item.produto] += (item.quantidade_pacotes || 0);
+            });
+
+            // Preparar dados para o chart
+            // Pegar Top 10 produtos
+            const labels = Object.keys(totaisPorProduto);
+            const values = Object.values(totaisPorProduto);
+            
+            // Unir para ordenar
+            const lista = labels.map((label, i) => ({ label, value: values[i] }));
+            lista.sort((a, b) => b.value - a.value); // Decrescente
+            const topLista = lista.slice(0, 10); // Top 10 para não poluir
+
+            if (chartInstance) {
+                chartInstance.destroy(); // Limpa gráfico anterior
+            }
+
+            // Registra o Plugin de Labels
+            Chart.register(ChartDataLabels);
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: topLista.map(i => i.label),
+                    datasets: [{
+                        label: 'Pacotes Produzidos',
+                        data: topLista.map(i => i.value),
+                        backgroundColor: 'rgba(74, 222, 128, 0.6)', // Verde Suave
+                        borderColor: 'rgba(34, 197, 94, 1)', // Verde Borda
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                plugins: [ChartDataLabels], // Ativa plugin nesta instancia
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y', // Barra Horizontal
+                    layout: {
+                        padding: {
+                            right: 50 // Espaço extra na direita para caber o número
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }, // Desativa tooltip padrão já que tem o label
+                        datalabels: {
+                            anchor: 'end', // Ancora no final da barra
+                            align: 'end',  // Alinha para fora da barra
+                            color: '#FFFFFF', // Cor do texto
+                            font: {
+                                weight: 'bold',
+                                size: 11
+                            },
+                            formatter: function(value, context) {
+                                return value + " pcts";
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            beginAtZero: true, 
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#9CA3AF' }
+                        },
+                        y: { 
+                            grid: { display: false },
+                            ticks: { 
+                                color: '#D1D5DB', 
+                                font: { size: 10 },
+                                callback: function(value) {
+                                    const label = this.getLabelForValue(value);
+                                    return label.length > 15 ? label.substr(0, 15) + '...' : label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- LÓGICA DE EXCLUSÃO (CORRIGIR ERRO) ---
+        window.tentarExcluirLancamento = async function(listaIds) {
+            if(!listaIds || listaIds.length === 0) return;
+
+            // Ordena pelo timestamp decrescente (o mais novo primeiro)
+            listaIds.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            const qtd = listaIds.length;
+            const ultimoId = listaIds[0].id; // Pega o ID do mais recente
+
+            let msg = "";
+            if(qtd > 1) {
+                msg = `Este registro visual é a soma de ${qtd} lançamentos.\nDeseja excluir apenas o ÚLTIMO lançamento realizado para corrigir o valor total?`;
+            } else {
+                msg = "Deseja realmente excluir este lançamento de produção?";
+            }
+
+            if(confirm(msg)) {
+                try {
+                    // Deleta o documento direto no Firebase
+                    await deleteDoc(doc(db, "lancamentos_producao", ultimoId));
+                    alert("Lançamento excluído/corrigido com sucesso.");
+                    // O onSnapshot vai atualizar a tela automaticamente
+                } catch(e) {
+                    alert("Erro ao excluir: " + e.message);
+                }
+            }
+        }
+
+        // Função de Salvamento (Unitário - Checkbox)
         window.saveItemStatusToCloud = async function(itemId, isChecked, isSilent = false) {
             const docId = itemId.replace(/\//g, '_'); 
             const docRef = doc(db, dbCollectionPath, docId);
-            
-            // Feedback Visual de "Salvando..."
             const statusEl = document.getElementById('data-status');
             if(statusEl && !isSilent) {
-                statusEl.textContent = "Salvando alteração...";
+                statusEl.textContent = "Salvando...";
                 statusEl.className = "text-xs mt-1 text-yellow-500 font-bold";
             }
-
             try {
                 if (isChecked) {
                     await setDoc(docRef, { completed: true, timestamp: new Date().toISOString(), user: 'admin' });
                 } else {
                     await deleteDoc(docRef);
                 }
-                
                 if(statusEl && !isSilent) {
                     setTimeout(() => {
-                        statusEl.textContent = "Online • Salvo com Sucesso";
+                        statusEl.textContent = "Online • Salvo";
                         statusEl.className = "text-xs mt-1 text-green-500 font-bold";
                     }, 500);
                 }
-
             } catch (e) {
                 console.error("Erro gravar:", e);
-                if(!isSilent) alert("ERRO AO SALVAR NO FIREBASE:\n" + e.message + "\n\nVerifique se o banco está em 'Modo de Teste' nas Regras.");
-                
-                if(statusEl) {
-                    statusEl.textContent = "Erro ao Salvar!";
-                    statusEl.className = "text-xs mt-1 text-red-500 font-bold";
-                }
-                
-                // Reverte visualmente se falhar
-                if (typeof window.updateAllVisuals === 'function') window.updateAllVisuals(); 
+                if(typeof window.updateAllVisuals === 'function') window.updateAllVisuals(); 
             }
         }
 
         // Função de Salvamento Manual
         window.forceManualSync = async function() {
             if(!window.isAdmin) return;
-            if(!confirm("Isso irá reenviar o status de TODOS os itens marcados na sua tela para o banco de dados. Continuar?")) return;
-
+            if(!confirm("Reenviar status para nuvem?")) return;
             const btn = document.getElementById('btn-manual-save');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Enviando...';
+            btn.innerHTML = '...';
             btn.disabled = true;
-
             let successCount = 0;
             const items = Object.keys(window.completionStatus);
-            
             for (const itemId of items) {
-                // Só salva o que está true
                 if(window.completionStatus[itemId]) {
-                    await window.saveItemStatusToCloud(itemId, true, true); // true = modo silencioso
+                    await window.saveItemStatusToCloud(itemId, true, true);
                     successCount++;
                 }
             }
-
             btn.innerHTML = originalText;
             btn.disabled = false;
-            alert(`Sincronização Manual Concluída!\n${successCount} itens foram confirmados no servidor.`);
+            alert(`Sincronização: ${successCount} itens.`);
         }
+
+        // --- LÓGICA DE PRODUÇÃO (MODAL) ---
+        const FATORES_M3 = {
+            "PAINEL RIPADO BRANCO - 5 ¹/4 X 8'": 1.63881,
+            "PAINEL RIPADO PRETO - 5 ¹/4 X 8'": 1.63881,
+            "PAINEL RIPADO IMPRESSO - 5 ¹/4 X 8'": 1.63881,
+            "L S4S 1 ¹/2 X 8'": 1.72465,
+            "L S4S 5 ¹/2 X 8'": 1.70254,
+            "L S4S 3 ¹/2 X 8'": 1.85732,
+            "L S4S 5 ¹/2 X 12'": 1.82415
+        };
+
+        window.abrirModalProducao = function() {
+            document.getElementById('prod-modal-overlay').style.display = 'block';
+            document.getElementById('prod-modal-container').style.display = 'flex';
+            document.getElementById('prod-data').valueAsDate = new Date();
+            const select = document.getElementById('prod-select');
+            if(select.options.length <= 1) {
+                Object.keys(FATORES_M3).forEach(nome => {
+                    let opt = document.createElement('option');
+                    opt.value = nome;
+                    opt.innerHTML = nome;
+                    select.appendChild(opt);
+                });
+            }
+        };
+
+        window.fecharModalProducao = function() {
+            document.getElementById('prod-modal-overlay').style.display = 'none';
+            document.getElementById('prod-modal-container').style.display = 'none';
+            document.getElementById('prod-qtd').value = '';
+            document.getElementById('prod-m3').value = '';
+            document.getElementById('prod-select').selectedIndex = 0;
+        };
+
+        window.calcularVolumeProducao = function() {
+            const produto = document.getElementById('prod-select').value;
+            const qtd = parseFloat(document.getElementById('prod-qtd').value) || 0;
+            const m3Input = document.getElementById('prod-m3');
+            if(produto && FATORES_M3[produto]) {
+                const resultado = (qtd * FATORES_M3[produto]).toFixed(5);
+                m3Input.value = resultado + " m³";
+            } else {
+                m3Input.value = "0.00000 m³";
+            }
+        };
+
+        window.salvarProducao = async function() {
+            const data = document.getElementById('prod-data').value;
+            const produto = document.getElementById('prod-select').value;
+            const qtd = document.getElementById('prod-qtd').value;
+            const m3 = document.getElementById('prod-m3').value; 
+
+            if(!produto || !qtd || qtd <= 0) {
+                alert("Preencha corretamente.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-salvar-producao');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = "Salvando...";
+
+            try {
+                let m3Clean = parseFloat(m3.replace(' m³', '')) || 0;
+
+                await addDoc(collection(db, "lancamentos_producao"), {
+                    data: data,
+                    produto: produto,
+                    quantidade_pacotes: parseFloat(qtd),
+                    volume_m3: m3Clean,
+                    timestamp: new Date().toISOString(),
+                    usuario: "admin_pcp"
+                });
+                
+                alert("Produção Salva!");
+                window.fecharModalProducao();
+            } catch (e) {
+                console.error("Erro prod:", e);
+                alert("Erro ao salvar: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        };
 
     </script>
 
@@ -216,7 +523,7 @@
         #completed-po-scroller:hover #scroller-content { animation-play-state: paused; }
         
         /* MODAL */
-        .modal-overlay { display: none; position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.7); z-index: 40; transition: opacity 0.2s ease-in-out; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.7); z-index: 40; transition: opacity 0.2s ease-in-out; backdrop-filter: blur(2px); }
         .modal-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; z-index: 50; width: 90%; max-width: 50rem; max-height: 90vh; display: none; flex-direction: column; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); }
         .modal-title { font-size: 1.25rem; font-weight: 600; }
@@ -234,6 +541,19 @@
         .admin-status { font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; margin-bottom: 1rem; text-align: center; border: 1px solid transparent; cursor: pointer; }
         .admin-locked { border-color: #30363D; color: #8B949E; background-color: #161B22; }
         .admin-unlocked { border-color: #238636; color: #3fb950; background-color: rgba(35, 134, 54, 0.1); }
+        
+        .input-dark {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem;
+            border-radius: 4px;
+            width: 100%;
+        }
+        .input-dark:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
     </style>
 </head>
 <body class="grid grid-cols-12 gap-4 p-4 min-h-screen">
@@ -242,17 +562,19 @@
         <img id="logo" src="logo.png" alt="Logo" class="mb-5 max-h-17 object-contain self-center" onerror="this.style.display='none'; document.getElementById('logo-error').style.display='block';">
         <p id="logo-error" class="text-xs text-red-400 text-center mb-4" style="display: none;">Logo não encontrada</p>
 
-        <!-- BOTÃO DE LOGIN/STATUS ADMIN -->
         <div id="admin-btn" class="admin-status admin-locked" onclick="toggleAdmin()">
             <i class="fas fa-lock mr-2"></i> Acesso: Visitante
         </div>
 
-        <!-- BOTÃO DE SALVAR (SÓ PARA ADMIN) -->
         <button id="btn-manual-save" class="btn btn-secondary w-full mb-6 hidden" onclick="window.forceManualSync()">
             <i class="fas fa-cloud-upload-alt mr-2"></i> Salvar
         </button>
 
-        <button id="reload-button" class="btn w-full mb-6">Recarregar Dados</button>
+        <button id="reload-button" class="btn w-full mb-4">Recarregar Dados</button>
+
+        <button onclick="window.abrirModalProducao()" class="btn w-full mb-6 bg-gray-700 hover:bg-gray-600 text-white">
+            <i class="fas fa-clipboard-list mr-2"></i> Lançar Produção
+        </button>
 
         <a href="https://app.powerbi.com/links/B8TF3aTy_D?ctid=00efaec3-2fdf-400e-ab1c-0a8efb39d281&pbi_source=linkShare" 
            class="btn-filter flex items-center w-full justify-center" 
@@ -290,13 +612,13 @@
         <div class="mt-auto border-t border-gray-700 pt-4">
             <div id="data-status" class="text-xs text-gray-400">Verificando...</div>
              <div id="data-last-updated" class="text-xs text-gray-500 mt-1"></div>
-             <p class="text-xs text-gray-500 mt-2">Versão: 1.0.0 </p>
+             <p class="text-xs text-gray-500 mt-2">Versão: 1.1.0 </p>
              <p class="text-xs text-gray-500 mt-2">© Copyright 2025 Flora Exportadora</p>
              <p class="text-xs text-gray-500 mt-2">Desenvolvido por PCP_EXPAMA</p>
         </div>
     </aside>
 
-    <main class="col-span-12 md:col-span-10">
+    <main class="col-span-12 md:col-span-7">
         <div class="card mb-4 flex flex-row justify-between items-center">
              <div>
                  <h1 class="text-2xl font-bold mb-1">PCP - PLANEJAMENTO E CONTROLE DE PRODUÇÃO</h1>
@@ -387,9 +709,55 @@
         </div>
     </main>
 
-    <!-- 
-      MODAL (POPUP)
-    -->
+    <aside class="col-span-12 md:col-span-3 card flex flex-col h-fit">
+        <h2 class="text-lg font-semibold mb-3 border-b border-gray-700 pb-2">
+            <i class="fas fa-history mr-2"></i> Histórico de Produção
+        </h2>
+        
+        <div class="grid grid-cols-2 gap-2 mb-4">
+            <div>
+                <label class="text-[10px] text-gray-400 font-bold uppercase">De:</label>
+                <input type="date" id="hist-start" onchange="window.filtrarProducao()" class="input-dark text-xs p-1">
+            </div>
+            <div>
+                <label class="text-[10px] text-gray-400 font-bold uppercase">Até:</label>
+                <input type="date" id="hist-end" onchange="window.filtrarProducao()" class="input-dark text-xs p-1">
+            </div>
+        </div>
+
+        <div class="mb-4" style="height: 200px;">
+            <canvas id="producaoChart"></canvas>
+        </div>
+
+        <div class="overflow-y-auto max-h-[500px] mb-4 border border-white/10 rounded-md">
+            <table class="w-full text-sm">
+                <thead class="bg-[#21262D] text-gray-300 sticky top-0">
+                    <tr>
+                        <th class="p-2 text-left font-semibold text-xs">Data</th>
+                        <th class="p-2 text-left font-semibold text-xs">Prod.</th>
+                        <th class="p-2 text-center font-semibold text-xs">Pcts</th>
+                        <th class="p-2 text-right font-semibold text-xs">M³</th>
+                        <th class="p-2 text-center font-semibold text-xs"><i class="fas fa-trash"></i></th>
+                    </tr>
+                </thead>
+                <tbody id="producao-table-body">
+                    <tr><td colspan="5" class="text-center text-gray-500 py-4 text-xs">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-auto border-t border-gray-700 pt-3">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-xs text-gray-400">Total Pacotes:</span>
+                <span id="total-hist-pcts" class="text-sm font-bold text-white">0</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400">Total Volume:</span>
+                <span id="total-hist-m3" class="text-sm font-bold text-green-400">0.000 m³</span>
+            </div>
+        </div>
+    </aside>
+
     <div id="mrp-modal-overlay" class="modal-overlay" onclick="hideMRPModal()"></div>
     <div id="mrp-modal-container" class="modal-container">
         <div class="modal-header">
@@ -406,10 +774,40 @@
         </div>
     </div>
     
-    <!-- Script de Carregamento Dinâmico -->
+    <div id="prod-modal-overlay" class="modal-overlay"></div>
+    <div id="prod-modal-container" class="modal-container" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Lançamento de Produção</h3>
+            <span class="modal-close-btn" onclick="window.fecharModalProducao()">&times;</span>
+        </div>
+        <div class="modal-content flex flex-col gap-3">
+            <div>
+                <label class="text-xs text-gray-400 font-bold uppercase">Data</label>
+                <input type="date" id="prod-data" class="input-dark">
+            </div>
+            <div>
+                <label class="text-xs text-gray-400 font-bold uppercase">Produto</label>
+                <select id="prod-select" onchange="window.calcularVolumeProducao()" class="input-dark">
+                    <option value="" disabled selected>Selecione...</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs text-gray-400 font-bold uppercase">Quantidade (Pacotes)</label>
+                <input type="number" id="prod-qtd" placeholder="Qtd" oninput="window.calcularVolumeProducao()" class="input-dark">
+            </div>
+            <div>
+                <label class="text-xs text-gray-400 font-bold uppercase">Volume Total (m³)</label>
+                <input type="text" id="prod-m3" readonly placeholder="0.00000 m³" class="input-dark bg-black/20">
+            </div>
+        </div>
+        <div class="modal-footer flex gap-2">
+            <button onclick="window.fecharModalProducao()" class="btn btn-secondary">Cancelar</button>
+            <button id="btn-salvar-producao" onclick="window.salvarProducao()" class="btn" style="background-color: #238636; color: white;">Salvar</button>
+        </div>
+    </div>
+
     <script id="script-dados" src=""></script>
 
-    <!-- SCRIPT PRINCIPAL -->
     <script> 
         const CAMINHO_JS = "dados_atuais.js";
         
@@ -554,11 +952,11 @@
              adjustedStockItems.forEach(item => {
                 const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
                  if (!carteiraAgrupada[key] && (item.Pecas_Estoque_Liquido > 0 || item.M3_Estoque_Liquido > 0.001)) {
-                       dashboardData.push({
+                        dashboardData.push({
                              Produto: item.Produto, Perfil: item.Perfil, M3_Carteira_Volume: 0, M3_Estoque_Liquido: item.M3_Estoque_Liquido,
                              Pacotes_Carteira: 0, Pacotes_Estoque: Math.floor(item.Pecas_Estoque_Liquido / getPecasPorPacote(item.Perfil)),
                              M3_A_Produzir: 0, Pacotes_A_Produzir: 0,
-                       });
+                        });
                   }
             });
              dashboardData.sort((a, b) => { const pc = (a.Produto || '').localeCompare(b.Produto || ''); return pc !== 0 ? pc : (a.Perfil || '').localeCompare(b.Perfil || ''); });
@@ -1002,9 +1400,9 @@
                  if (event.target.tagName === 'OPTION') event.preventDefault();
                  const option = event.target;
                  if (option.tagName === 'OPTION') {
-                      option.selected = !option.selected;
-                      selectElement.dispatchEvent(new Event('change'));
-                      requestAnimationFrame(() => { selectElement.scrollTop = currentScrollTop; });
+                       option.selected = !option.selected;
+                       selectElement.dispatchEvent(new Event('change'));
+                       requestAnimationFrame(() => { selectElement.scrollTop = currentScrollTop; });
                  }
              };
              poSelect.addEventListener('mousedown', handleInteraction);
@@ -1017,4 +1415,3 @@
     </script>
 </body>
 </html>
-
