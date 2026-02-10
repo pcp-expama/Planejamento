@@ -775,12 +775,12 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 2.4384,
-    "Solicitado_Pecas": 20160,
-    "Solicitado_M3": 78.662862,
+    "Solicitado_Pecas": 10080,
+    "Solicitado_M3": 39.331431,
     "Enviado_Pecas": 0.0,
     "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 78.662862,
-    "Pendente_Pecas": 20160.0
+    "Pendente_M3": 39.331431,
+    "Pendente_Pecas": 10080.0
   }
 ];
 
