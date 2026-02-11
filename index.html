@@ -44,6 +44,9 @@
         // Dados globais de produção para filtro
         let ALL_PRODUCAO_DATA = [];
         let chartInstance = null; // Variável para controlar o gráfico
+        
+        // --- NOVO: CONTROLE DO FILTRO ---
+        window.filterMode = 'month'; // 'today' ou 'month' (Padrão: Mês Atual)
 
         // Login
         signInAnonymously(auth).then(() => {
@@ -90,32 +93,70 @@
                         ALL_PRODUCAO_DATA.push(data);
                     });
                     
-                    // Define datas padrão (Mês atual) se estiverem vazias
-                    const dtInicio = document.getElementById('hist-start');
-                    const dtFim = document.getElementById('hist-end');
-                    if(!dtInicio.value) {
-                        const hoje = new Date();
-                        const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-                        dtInicio.valueAsDate = primeiroDia;
-                        dtFim.valueAsDate = hoje;
-                    }
-
+                    // Atualiza a tela com o filtro atual
                     window.filtrarProducao();
                 });
             } catch (e) { console.error("Erro ao ler produção:", e); }
         }
 
+        // --- NOVA FUNÇÃO DE TROCA DE FILTRO (BOTÕES) ---
+        window.setFilterMode = function(mode) {
+            window.filterMode = mode;
+            
+            // Atualiza visual dos botões
+            const btnToday = document.getElementById('btn-filter-today');
+            const btnMonth = document.getElementById('btn-filter-month');
+            
+            if(mode === 'today') {
+                btnToday.classList.remove('btn-inactive');
+                btnToday.classList.add('btn-active');
+                btnMonth.classList.remove('btn-active');
+                btnMonth.classList.add('btn-inactive');
+            } else {
+                btnMonth.classList.remove('btn-inactive');
+                btnMonth.classList.add('btn-active');
+                btnToday.classList.remove('btn-active');
+                btnToday.classList.add('btn-inactive');
+            }
+
+            window.filtrarProducao();
+        }
+
+        // --- FUNÇÃO DE FILTRO ATUALIZADA ---
         window.filtrarProducao = function() {
-            const dtInicioVal = document.getElementById('hist-start').value;
-            const dtFimVal = document.getElementById('hist-end').value;
+            // Obter data local correta (YYYY-MM-DD)
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hojeStr = `${year}-${month}-${day}`;
+            const inicioMesStr = `${year}-${month}-01`;
+
+            let dtInicio, dtFim;
+
+            if (window.filterMode === 'today') {
+                dtInicio = hojeStr;
+                dtFim = hojeStr;
+            } else {
+                // Mês Atual
+                dtInicio = inicioMesStr;
+                // Para garantir que pegue até o último dia do mês, definimos o fim como algo no futuro ou o próprio dia atual se for passado
+                // Vamos usar hojeStr como fim, pois não há produção futura lançada
+                dtFim = hojeStr; 
+                
+                // Se quiser garantir o mês inteiro (caso alguém lance data futura sem querer):
+                // const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
+                // dtFim = `${year}-${month}-${lastDay}`;
+            }
             
             const dadosFiltrados = ALL_PRODUCAO_DATA.filter(item => {
                 if (!item.data) return false;
                 const itemDateStr = item.data; 
                 
                 let valid = true;
-                if (dtInicioVal && itemDateStr < dtInicioVal) valid = false;
-                if (dtFimVal && itemDateStr > dtFimVal) valid = false;
+                // Comparação de Strings YYYY-MM-DD funciona bem
+                if (itemDateStr < dtInicio) valid = false;
+                if (itemDateStr > dtFim) valid = false;
                 
                 return valid;
             });
@@ -128,7 +169,7 @@
             atualizarGrafico(dadosFiltrados);
         }
 
-        // --- NOVA FUNÇÃO DE AGRUPAMENTO VISUAL ---
+        // --- FUNÇÃO DE AGRUPAMENTO VISUAL ---
         function agruparDadosPorDataEProduto(dados) {
             const mapa = {};
 
@@ -168,8 +209,12 @@
             let totalPcts = 0;
             let totalM3 = 0;
             
-            // Data de hoje para verificar permissão de exclusão
-            const hojeIso = new Date().toISOString().split('T')[0];
+            // Data de hoje local para verificar permissão de exclusão
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hojeIso = `${year}-${month}-${day}`;
 
             if (dadosAgrupados.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4 text-xs">Sem registros no período.</td></tr>`;
@@ -180,9 +225,12 @@
 
                     const dataFormatada = item.data ? item.data.split('-').reverse().slice(0,2).join('/') : '--/--';
                     
-                    // Verifica se é hoje para mostrar botão de delete
+                    // --- TRAVA DE SEGURANÇA VISUAL ---
+                    // Botão de Delete só aparece se for HOJE E se for ADMIN
                     const isToday = item.data === hojeIso;
-                    const deleteBtn = isToday 
+                    const canDelete = isToday && window.isAdmin; 
+                    
+                    const deleteBtn = canDelete 
                         ? `<button onclick='window.tentarExcluirLancamento(${JSON.stringify(item.ids_originais)})' class="text-red-500 hover:text-red-400 ml-2" title="Excluir lançamento de hoje"><i class="fas fa-trash"></i></button>` 
                         : '';
 
@@ -207,25 +255,22 @@
         function atualizarGrafico(dadosBrutos) {
             const ctx = document.getElementById('producaoChart').getContext('2d');
             
-            // Agrupar TOTAL de pacotes por Produto (independente da data filtrada)
+            // Agrupar TOTAL de pacotes por Produto
             const totaisPorProduto = {};
             dadosBrutos.forEach(item => {
                 if(!totaisPorProduto[item.produto]) totaisPorProduto[item.produto] = 0;
                 totaisPorProduto[item.produto] += (item.quantidade_pacotes || 0);
             });
 
-            // Preparar dados para o chart
-            // Pegar Top 10 produtos
             const labels = Object.keys(totaisPorProduto);
             const values = Object.values(totaisPorProduto);
             
-            // Unir para ordenar
             const lista = labels.map((label, i) => ({ label, value: values[i] }));
-            lista.sort((a, b) => b.value - a.value); // Decrescente
-            const topLista = lista.slice(0, 10); // Top 10 para não poluir
+            lista.sort((a, b) => b.value - a.value); 
+            const topLista = lista.slice(0, 10); 
 
             if (chartInstance) {
-                chartInstance.destroy(); // Limpa gráfico anterior
+                chartInstance.destroy(); 
             }
 
             // Registra o Plugin de Labels
@@ -238,29 +283,29 @@
                     datasets: [{
                         label: 'Pacotes Produzidos',
                         data: topLista.map(i => i.value),
-                        backgroundColor: 'rgba(74, 222, 128, 0.6)', // Verde Suave
-                        borderColor: 'rgba(34, 197, 94, 1)', // Verde Borda
+                        backgroundColor: 'rgba(74, 222, 128, 0.6)', 
+                        borderColor: 'rgba(34, 197, 94, 1)', 
                         borderWidth: 1,
                         borderRadius: 4
                     }]
                 },
-                plugins: [ChartDataLabels], // Ativa plugin nesta instancia
+                plugins: [ChartDataLabels], 
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    indexAxis: 'y', // Barra Horizontal
+                    indexAxis: 'y', 
                     layout: {
                         padding: {
-                            right: 50 // Espaço extra na direita para caber o número
+                            right: 50 
                         }
                     },
                     plugins: {
                         legend: { display: false },
-                        tooltip: { enabled: false }, // Desativa tooltip padrão já que tem o label
+                        tooltip: { enabled: false }, 
                         datalabels: {
-                            anchor: 'end', // Ancora no final da barra
-                            align: 'end',  // Alinha para fora da barra
-                            color: '#FFFFFF', // Cor do texto
+                            anchor: 'end', 
+                            align: 'end',  
+                            color: '#FFFFFF', 
                             font: {
                                 weight: 'bold',
                                 size: 11
@@ -292,8 +337,14 @@
             });
         }
 
-        // --- LÓGICA DE EXCLUSÃO (CORRIGIR ERRO) ---
+        // --- LÓGICA DE EXCLUSÃO (TRAVADA POR SENHA) ---
         window.tentarExcluirLancamento = async function(listaIds) {
+            // TRAVA DE SEGURANÇA 1
+            if (!window.isAdmin) {
+                alert("ACESSO NEGADO: Apenas administradores podem excluir registros.");
+                return;
+            }
+
             if(!listaIds || listaIds.length === 0) return;
 
             // Ordena pelo timestamp decrescente (o mais novo primeiro)
@@ -311,10 +362,8 @@
 
             if(confirm(msg)) {
                 try {
-                    // Deleta o documento direto no Firebase
                     await deleteDoc(doc(db, "lancamentos_producao", ultimoId));
                     alert("Lançamento excluído/corrigido com sucesso.");
-                    // O onSnapshot vai atualizar a tela automaticamente
                 } catch(e) {
                     alert("Erro ao excluir: " + e.message);
                 }
@@ -380,7 +429,14 @@
             "L S4S 5 ¹/2 X 12'": 1.82415
         };
 
+        // --- TRAVA DE SEGURANÇA 2: LANÇAMENTO ---
         window.abrirModalProducao = function() {
+            if (!window.isAdmin) {
+                alert("ACESSO RESTRITO: É necessário senha de administrador para lançar produção.");
+                toggleAdmin(); // Chama a função de login
+                return;
+            }
+
             document.getElementById('prod-modal-overlay').style.display = 'block';
             document.getElementById('prod-modal-container').style.display = 'flex';
             document.getElementById('prod-data').valueAsDate = new Date();
@@ -416,6 +472,8 @@
         };
 
         window.salvarProducao = async function() {
+            if (!window.isAdmin) return; // Segurança extra
+
             const data = document.getElementById('prod-data').value;
             const produto = document.getElementById('prod-select').value;
             const qtd = document.getElementById('prod-qtd').value;
@@ -504,6 +562,11 @@
         .btn-filter { background-color: var(--bg-secondary); color: var(--accent-primary1); padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s; border: 1px solid var(--border-color); margin-right: 0.5rem; }
         .btn-filter:hover { background-color: var(--accent-secondary); color: var(--bg-primary); border-color: var(--accent-secondary); }
         
+        /* ESTILOS DOS BOTÕES DE FILTRO */
+        .btn-active { background-color: var(--highlight-green); color: white; border-color: var(--highlight-green); }
+        .btn-inactive { background-color: var(--bg-secondary); color: var(--text-secondary); border-color: var(--border-color); }
+        .btn-inactive:hover { background-color: #21262D; color: var(--text-primary); }
+
         .po-select-list { background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); width: 100%; border-radius: 6px; padding: 0.5rem; height: 10rem; overflow-y: auto; -webkit-tap-highlight-color: transparent; }
         .po-select-list option { padding: 0.25rem 0.5rem; font-size: 0.75rem; white-space: nowrap; color: var(--text-primary); background-color: var(--bg-secondary); cursor: pointer; }
         .po-select-list option:checked, .po-select-list option:hover:checked { background-color: var(--accent-secondary); color: var(--bg-primary); font-weight: bold; }
@@ -714,15 +777,9 @@
             <i class="fas fa-history mr-2"></i> Histórico de Produção
         </h2>
         
-        <div class="grid grid-cols-2 gap-2 mb-4">
-            <div>
-                <label class="text-[10px] text-gray-400 font-bold uppercase">De:</label>
-                <input type="date" id="hist-start" onchange="window.filtrarProducao()" class="input-dark text-xs p-1">
-            </div>
-            <div>
-                <label class="text-[10px] text-gray-400 font-bold uppercase">Até:</label>
-                <input type="date" id="hist-end" onchange="window.filtrarProducao()" class="input-dark text-xs p-1">
-            </div>
+        <div class="flex gap-2 mb-4">
+            <button id="btn-filter-today" onclick="setFilterMode('today')" class="btn-filter w-1/2 text-center justify-center btn-inactive text-xs py-2">Hoje</button>
+            <button id="btn-filter-month" onclick="setFilterMode('month')" class="btn-filter w-1/2 text-center justify-center btn-active text-xs py-2">Mês Atual</button>
         </div>
 
         <div class="mb-4" style="height: 200px;">
@@ -863,6 +920,8 @@
                     if (simpleHash(senha) === 110813) {
                         window.isAdmin = true;
                         updateAdminUI();
+                        // Recarrega a tabela de produção para mostrar/ocultar lixeiras
+                        window.filtrarProducao(); 
                     } else {
                         alert("Senha incorreta.");
                     }
