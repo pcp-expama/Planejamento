@@ -45,8 +45,8 @@
         let ALL_PRODUCAO_DATA = [];
         let chartInstance = null; // Variável para controlar o gráfico
         
-        // --- NOVO: CONTROLE DO FILTRO ---
-        window.filterMode = 'month'; // 'today' ou 'month' (Padrão: Mês Atual)
+        // --- CONFIGURAÇÃO PADRÃO: HOJE ---
+        window.filterMode = 'today'; 
 
         // Login
         signInAnonymously(auth).then(() => {
@@ -93,7 +93,7 @@
                         ALL_PRODUCAO_DATA.push(data);
                     });
                     
-                    // Atualiza a tela com o filtro atual
+                    // Atualiza a tela com o filtro atual (que agora começa como Today)
                     window.filtrarProducao();
                 });
             } catch (e) { console.error("Erro ao ler produção:", e); }
@@ -140,13 +140,7 @@
             } else {
                 // Mês Atual
                 dtInicio = inicioMesStr;
-                // Para garantir que pegue até o último dia do mês, definimos o fim como algo no futuro ou o próprio dia atual se for passado
-                // Vamos usar hojeStr como fim, pois não há produção futura lançada
                 dtFim = hojeStr; 
-                
-                // Se quiser garantir o mês inteiro (caso alguém lance data futura sem querer):
-                // const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
-                // dtFim = `${year}-${month}-${lastDay}`;
             }
             
             const dadosFiltrados = ALL_PRODUCAO_DATA.filter(item => {
@@ -154,7 +148,7 @@
                 const itemDateStr = item.data; 
                 
                 let valid = true;
-                // Comparação de Strings YYYY-MM-DD funciona bem
+                // Comparação de Strings YYYY-MM-DD
                 if (itemDateStr < dtInicio) valid = false;
                 if (itemDateStr > dtFim) valid = false;
                 
@@ -217,7 +211,7 @@
             const hojeIso = `${year}-${month}-${day}`;
 
             if (dadosAgrupados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4 text-xs">Sem registros no período.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4 text-xs">Sem registros.</td></tr>`;
             } else {
                 dadosAgrupados.forEach(item => {
                     totalPcts += item.quantidade_pacotes;
@@ -778,8 +772,8 @@
         </h2>
         
         <div class="flex gap-2 mb-4">
-            <button id="btn-filter-today" onclick="setFilterMode('today')" class="btn-filter w-1/2 text-center justify-center btn-inactive text-xs py-2">Hoje</button>
-            <button id="btn-filter-month" onclick="setFilterMode('month')" class="btn-filter w-1/2 text-center justify-center btn-active text-xs py-2">Mês Atual</button>
+            <button id="btn-filter-today" onclick="setFilterMode('today')" class="btn-filter w-1/2 text-center justify-center btn-active text-xs py-2">Hoje</button>
+            <button id="btn-filter-month" onclick="setFilterMode('month')" class="btn-filter w-1/2 text-center justify-center btn-inactive text-xs py-2">Mês Atual</button>
         </div>
 
         <div class="mb-4" style="height: 200px;">
