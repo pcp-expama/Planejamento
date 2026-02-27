@@ -2,7 +2,7 @@ const MOCK_ESTOQUE_LIQUIDO = [
   {
     "Produto": "MOLDURAS",
     "Perfil": "BRANCO",
-    "M3_Estoque_Liquido": 1425.285,
+    "M3_Estoque_Liquido": 1390.154,
     "Pecas_Estoque_Liquido": 0.0
   },
   {
@@ -14,20 +14,20 @@ const MOCK_ESTOQUE_LIQUIDO = [
   {
     "Produto": "PAINEL RIPADO",
     "Perfil": "BRANCO",
-    "M3_Estoque_Liquido": 186.0048920992,
-    "Pecas_Estoque_Liquido": 48720.0
+    "M3_Estoque_Liquido": 65.98549900287999,
+    "Pecas_Estoque_Liquido": 17961.0
   },
   {
     "Produto": "PAINEL RIPADO",
     "Perfil": "IMPRESSO",
-    "M3_Estoque_Liquido": 60.63595649600002,
-    "Pecas_Estoque_Liquido": 15540.0
+    "M3_Estoque_Liquido": 67.19119569199995,
+    "Pecas_Estoque_Liquido": 17220.0
   },
   {
     "Produto": "PAINEL RIPADO",
     "Perfil": "PRETO",
-    "M3_Estoque_Liquido": 24.582144476799982,
-    "Pecas_Estoque_Liquido": 6300.0
+    "M3_Estoque_Liquido": 37.692621790399926,
+    "Pecas_Estoque_Liquido": 9660.0
   }
 ];
 
@@ -42,10 +42,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 420,
     "Solicitado_M3": 1.63881,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 1.63881,
-    "Pendente_Pecas": 420.0
+    "Enviado_Pecas": 420.0,
+    "Enviado_M3_Calc": 1.63881,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1075411-00",
@@ -57,10 +57,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 7980,
     "Solicitado_M3": 31.137383,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 31.137383,
-    "Pendente_Pecas": 7980.0
+    "Enviado_Pecas": 7980.0,
+    "Enviado_M3_Calc": 31.137383,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1075412-00",
@@ -72,10 +72,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 6300,
     "Solicitado_M3": 24.582144,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 24.582144,
-    "Pendente_Pecas": 6300.0
+    "Enviado_Pecas": 6300.0,
+    "Enviado_M3_Calc": 24.582144,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1075412-00",
@@ -87,10 +87,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 3360,
     "Solicitado_M3": 13.110477,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 13.110477,
-    "Pendente_Pecas": 3360.0
+    "Enviado_Pecas": 3360.0,
+    "Enviado_M3_Calc": 13.110477,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1075413-00",
@@ -132,10 +132,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 4200,
     "Solicitado_M3": 16.388096,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 16.388096,
-    "Pendente_Pecas": 4200.0
+    "Enviado_Pecas": 4200.0,
+    "Enviado_M3_Calc": 16.388096,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1075763-00",
@@ -147,10 +147,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 4200,
     "Solicitado_M3": 16.388096,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 16.388096,
-    "Pendente_Pecas": 4200.0
+    "Enviado_Pecas": 4200.0,
+    "Enviado_M3_Calc": 16.388096,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1075764-00",
@@ -162,10 +162,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 3360,
     "Solicitado_M3": 13.110477,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 13.110477,
-    "Pendente_Pecas": 3360.0
+    "Enviado_Pecas": 3360.0,
+    "Enviado_M3_Calc": 13.110477,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1075764-00",
@@ -177,10 +177,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 5040,
     "Solicitado_M3": 19.665716,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 19.665716,
-    "Pendente_Pecas": 5040.0
+    "Enviado_Pecas": 5040.0,
+    "Enviado_M3_Calc": 19.665716,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1075765-00",
@@ -222,10 +222,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 1260,
     "Solicitado_M3": 4.916429,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 4.916429,
-    "Pendente_Pecas": 1260.0
+    "Enviado_Pecas": 1260.0,
+    "Enviado_M3_Calc": 4.916429,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1075976-00",
@@ -237,10 +237,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 7140,
     "Solicitado_M3": 27.859764,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 27.859764,
-    "Pendente_Pecas": 7140.0
+    "Enviado_Pecas": 7140.0,
+    "Enviado_M3_Calc": 27.859764,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1077915-00",
@@ -252,10 +252,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 5880,
     "Solicitado_M3": 22.943335,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 22.943335,
-    "Pendente_Pecas": 5880.0
+    "Enviado_Pecas": 5880.0,
+    "Enviado_M3_Calc": 22.943335,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1077915-00",
@@ -267,10 +267,175 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 3780,
     "Solicitado_M3": 14.749287,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 14.749287,
-    "Pendente_Pecas": 3780.0
+    "Enviado_Pecas": 3780.0,
+    "Enviado_M3_Calc": 14.749287,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "1078784-00",
+    "Cliente": "NOVO",
+    "Perfil": "IMPRESSO",
+    "Produto": "PAINEL RIPADO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 5880,
+    "Solicitado_M3": 22.943335,
+    "Enviado_Pecas": 5880.0,
+    "Enviado_M3_Calc": 22.943335,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "1078784-00",
+    "Cliente": "NOVO",
+    "Perfil": "PRETO",
+    "Produto": "PAINEL RIPADO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 2520,
+    "Solicitado_M3": 9.832858,
+    "Enviado_Pecas": 2520.0,
+    "Enviado_M3_Calc": 9.832858,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "1078788-00",
+    "Cliente": "NOVO",
+    "Perfil": "BRANCO",
+    "Produto": "PAINEL RIPADO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 1260,
+    "Solicitado_M3": 4.916429,
+    "Enviado_Pecas": 1260.0,
+    "Enviado_M3_Calc": 4.916429,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "1078788-00",
+    "Cliente": "NOVO",
+    "Perfil": "IMPRESSO",
+    "Produto": "PAINEL RIPADO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 840,
+    "Solicitado_M3": 3.277619,
+    "Enviado_Pecas": 840.0,
+    "Enviado_M3_Calc": 3.277619,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "1078788-00",
+    "Cliente": "NOVO",
+    "Perfil": "PRETO",
+    "Produto": "PAINEL RIPADO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 7560,
+    "Solicitado_M3": 29.498573,
+    "Enviado_Pecas": 7560.0,
+    "Enviado_M3_Calc": 29.498573,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "1080129-00",
+    "Cliente": "NOVO",
+    "Perfil": "BRANCO",
+    "Produto": "PAINEL RIPADO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 1680,
+    "Solicitado_M3": 6.555239,
+    "Enviado_Pecas": 1680.0,
+    "Enviado_M3_Calc": 6.555239,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "1080129-00",
+    "Cliente": "NOVO",
+    "Perfil": "IMPRESSO",
+    "Produto": "PAINEL RIPADO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 1680,
+    "Solicitado_M3": 6.555239,
+    "Enviado_Pecas": 1680.0,
+    "Enviado_M3_Calc": 6.555239,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "1080129-00",
+    "Cliente": "NOVO",
+    "Perfil": "PRETO",
+    "Produto": "PAINEL RIPADO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 5040,
+    "Solicitado_M3": 19.665716,
+    "Enviado_Pecas": 5040.0,
+    "Enviado_M3_Calc": 19.665716,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "1080130-00",
+    "Cliente": "NOVO",
+    "Perfil": "PRETO",
+    "Produto": "PAINEL RIPADO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 8400,
+    "Solicitado_M3": 32.776193,
+    "Enviado_Pecas": 8400.0,
+    "Enviado_M3_Calc": 32.776193,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "1080131-00",
+    "Cliente": "NOVO",
+    "Perfil": "IMPRESSO",
+    "Produto": "PAINEL RIPADO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 4200,
+    "Solicitado_M3": 16.388096,
+    "Enviado_Pecas": 4200.0,
+    "Enviado_M3_Calc": 16.388096,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "1080131-00",
+    "Cliente": "NOVO",
+    "Perfil": "PRETO",
+    "Produto": "PAINEL RIPADO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 5460,
+    "Solicitado_M3": 21.304525,
+    "Enviado_Pecas": 5460.0,
+    "Enviado_M3_Calc": 21.304525,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "2353036",
@@ -601,6 +766,21 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Enviado_M3_Calc": 37.692621,
     "Pendente_M3": 0.0,
     "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "4500404116",
+    "Cliente": "METRIE",
+    "Perfil": "PRETO",
+    "Produto": "PAINEL RIPADO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 10080,
+    "Solicitado_M3": 39.331431,
+    "Enviado_Pecas": 0.0,
+    "Enviado_M3_Calc": 0.0,
+    "Pendente_M3": 39.331431,
+    "Pendente_Pecas": 10080.0
   }
 ];
 
@@ -615,7 +795,7 @@ const DADOS_BOM = [
     "Consumo_M3": 7.13873,
     "Consumo_Peca": 0.02777717,
     "Unidade_Medida": "UN",
-    "Tipo_Insumo": "CHAPA"
+    "Tipo_Insumo": "MDF"
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -624,7 +804,7 @@ const DADOS_BOM = [
     "Largura": 0.13335,
     "Comprimento": 2.4384,
     "Componente": "PASTA PARA EXTRUSAO - GESSO PRETO",
-    "Consumo_M3": 28.07807,
+    "Consumo_M3": 28.0,
     "Consumo_Peca": 0.1092532,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "GESSO PRETO"
@@ -636,7 +816,7 @@ const DADOS_BOM = [
     "Largura": 0.13335,
     "Comprimento": 2.4384,
     "Componente": "PRIMER PRETO FOSCO",
-    "Consumo_M3": 6.01673,
+    "Consumo_M3": 6.0,
     "Consumo_Peca": 0.0234114,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "PRIMER PRETO"
@@ -651,7 +831,7 @@ const DADOS_BOM = [
     "Consumo_M3": 0.32001,
     "Consumo_Peca": 0.00124517,
     "Unidade_Medida": "L",
-    "Tipo_Insumo": "TINTA"
+    "Tipo_Insumo": "TINTAS IMPRESSORA"
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -867,7 +1047,7 @@ const DADOS_BOM = [
     "Consumo_M3": 7.13873,
     "Consumo_Peca": 0.02777717,
     "Unidade_Medida": "UN",
-    "Tipo_Insumo": "CHAPA"
+    "Tipo_Insumo": "MDF"
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -876,7 +1056,7 @@ const DADOS_BOM = [
     "Largura": 0.13335,
     "Comprimento": 2.4384,
     "Componente": "PASTA PARA EXTRUSAO - GESSO 300 KG - BRANCO",
-    "Consumo_M3": 24.06692,
+    "Consumo_M3": 24.0,
     "Consumo_Peca": 0.0936456,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "GESSO BRANCO"
@@ -888,7 +1068,7 @@ const DADOS_BOM = [
     "Largura": 0.13335,
     "Comprimento": 2.4384,
     "Componente": "PRIMER BRANCO FOSCO",
-    "Consumo_M3": 8.02231,
+    "Consumo_M3": 8.0,
     "Consumo_Peca": 0.0312152,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "PRIMER BRANCO"
@@ -1107,7 +1287,7 @@ const DADOS_BOM = [
     "Consumo_M3": 7.13873,
     "Consumo_Peca": 0.027777167,
     "Unidade_Medida": "UN",
-    "Tipo_Insumo": "CHAPA"
+    "Tipo_Insumo": "MDF"
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -1131,7 +1311,7 @@ const DADOS_BOM = [
     "Consumo_M3": 0.23523,
     "Consumo_Peca": 0.00091528,
     "Unidade_Medida": "L",
-    "Tipo_Insumo": "TINTA"
+    "Tipo_Insumo": "TINTAS IMPRESSORA"
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -1152,7 +1332,7 @@ const DADOS_BOM = [
     "Largura": 0.13335,
     "Comprimento": 2.4384,
     "Componente": "PRIMER CREME",
-    "Consumo_M3": 9.02509,
+    "Consumo_M3": 9.0,
     "Consumo_Peca": 0.0351171,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "PRIMER CREME"
@@ -1371,7 +1551,7 @@ const DADOS_BOM = [
     "Consumo_M3": 4.79624,
     "Consumo_Peca": 0.0075769909,
     "Unidade_Medida": "UN",
-    "Tipo_Insumo": "CHAPA"
+    "Tipo_Insumo": "MDF"
   },
   {
     "Produto": "MOLDURAS",
@@ -1380,7 +1560,7 @@ const DADOS_BOM = [
     "Largura": 0.0381,
     "Comprimento": 2.4384,
     "Componente": "PASTA PARA EXTRUSAO - GESSO PRETO",
-    "Consumo_M3": 27.99239,
+    "Consumo_M3": 28.0,
     "Consumo_Peca": 0.0442217909,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "GESSO PRETO"
@@ -1392,7 +1572,7 @@ const DADOS_BOM = [
     "Largura": 0.0381,
     "Comprimento": 2.4384,
     "Componente": "PRIMER PRETO FOSCO",
-    "Consumo_M3": 5.99837,
+    "Consumo_M3": 6.0,
     "Consumo_Peca": 0.0094760981,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "PRIMER PRETO"
@@ -1407,7 +1587,7 @@ const DADOS_BOM = [
     "Consumo_M3": 0.30478,
     "Consumo_Peca": 0.0004814784,
     "Unidade_Medida": "L",
-    "Tipo_Insumo": "TINTA"
+    "Tipo_Insumo": "TINTAS IMPRESSORA"
   },
   {
     "Produto": "MOLDURAS",
@@ -1419,7 +1599,7 @@ const DADOS_BOM = [
     "Consumo_M3": 1.71925,
     "Consumo_Peca": 0.002716039,
     "Unidade_Medida": "L",
-    "Tipo_Insumo": "TINTA UV"
+    "Tipo_Insumo": "TINTAS IMPRESSORA"
   },
   {
     "Produto": "MOLDURAS",
@@ -1635,7 +1815,7 @@ const DADOS_BOM = [
     "Consumo_M3": 4.80505,
     "Consumo_Peca": 0.02777483,
     "Unidade_Medida": "UN",
-    "Tipo_Insumo": "CHAPA"
+    "Tipo_Insumo": "MDF"
   },
   {
     "Produto": "MOLDURAS",
@@ -1644,7 +1824,7 @@ const DADOS_BOM = [
     "Largura": 0.1397,
     "Comprimento": 2.4384,
     "Componente": "PASTA PARA EXTRUSAO - GESSO PRETO",
-    "Consumo_M3": 28.04382,
+    "Consumo_M3": 28.0,
     "Consumo_Peca": 0.16210299,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "GESSO PRETO"
@@ -1656,7 +1836,7 @@ const DADOS_BOM = [
     "Largura": 0.1397,
     "Comprimento": 2.4384,
     "Componente": "PRIMER PRETO FOSCO",
-    "Consumo_M3": 6.00939,
+    "Consumo_M3": 6.0,
     "Consumo_Peca": 0.03473635,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "PRIMER PRETO"
@@ -1671,7 +1851,7 @@ const DADOS_BOM = [
     "Consumo_M3": 0.08327,
     "Consumo_Peca": 0.00048135,
     "Unidade_Medida": "L",
-    "Tipo_Insumo": "TINTA"
+    "Tipo_Insumo": "TINTAS IMPRESSORA"
   },
   {
     "Produto": "MOLDURAS",
@@ -1683,7 +1863,7 @@ const DADOS_BOM = [
     "Consumo_M3": 2.03424,
     "Consumo_Peca": 0.0117586,
     "Unidade_Medida": "L",
-    "Tipo_Insumo": "TINTA UV"
+    "Tipo_Insumo": "TINTAS IMPRESSORA"
   },
   {
     "Produto": "MOLDURAS",
@@ -1899,7 +2079,7 @@ const DADOS_BOM = [
     "Consumo_M3": 4.53333,
     "Consumo_Peca": 0.016666658,
     "Unidade_Medida": "UN",
-    "Tipo_Insumo": "CHAPA"
+    "Tipo_Insumo": "MDF"
   },
   {
     "Produto": "MOLDURAS",
@@ -1908,7 +2088,7 @@ const DADOS_BOM = [
     "Largura": 0.0889,
     "Comprimento": 2.4384,
     "Componente": "PASTA PARA EXTRUSAO - GESSO PRETO",
-    "Consumo_M3": 28.06151,
+    "Consumo_M3": 28.0,
     "Consumo_Peca": 0.103167332,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "GESSO PRETO"
@@ -1920,7 +2100,7 @@ const DADOS_BOM = [
     "Largura": 0.0889,
     "Comprimento": 2.4384,
     "Componente": "PRIMER PRETO FOSCO",
-    "Consumo_M3": 6.01318,
+    "Consumo_M3": 6.0,
     "Consumo_Peca": 0.022107285,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "PRIMER PRETO"
@@ -1935,7 +2115,7 @@ const DADOS_BOM = [
     "Consumo_M3": 0.13094,
     "Consumo_Peca": 0.0004814,
     "Unidade_Medida": "L",
-    "Tipo_Insumo": "TINTA"
+    "Tipo_Insumo": "TINTAS IMPRESSORA"
   },
   {
     "Produto": "MOLDURAS",
@@ -1947,7 +2127,7 @@ const DADOS_BOM = [
     "Consumo_M3": 1.72378,
     "Consumo_Peca": 0.00633742,
     "Unidade_Medida": "L",
-    "Tipo_Insumo": "TINTA UV"
+    "Tipo_Insumo": "TINTAS IMPRESSORA"
   },
   {
     "Produto": "MOLDURAS",
@@ -2163,7 +2343,7 @@ const DADOS_BOM = [
     "Consumo_M3": 6.44444,
     "Consumo_Peca": 0.05555555,
     "Unidade_Medida": "UN",
-    "Tipo_Insumo": "CHAPA"
+    "Tipo_Insumo": "MDF"
   },
   {
     "Produto": "MOLDURAS",
@@ -2172,7 +2352,7 @@ const DADOS_BOM = [
     "Largura": 0.1397,
     "Comprimento": 3.657,
     "Componente": "PASTA PARA EXTRUSAO - GESSO PRETO",
-    "Consumo_M3": 28.20891,
+    "Consumo_M3": 28.0,
     "Consumo_Peca": 0.24318026,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "GESSO PRETO"
@@ -2184,7 +2364,7 @@ const DADOS_BOM = [
     "Largura": 0.1397,
     "Comprimento": 3.657,
     "Componente": "PRIMER PRETO FOSCO",
-    "Consumo_M3": 6.04477,
+    "Consumo_M3": 6.0,
     "Consumo_Peca": 0.05211006,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "PRIMER PRETO"
@@ -2199,7 +2379,7 @@ const DADOS_BOM = [
     "Consumo_M3": 0.05584,
     "Consumo_Peca": 0.0004814,
     "Unidade_Medida": "L",
-    "Tipo_Insumo": "TINTA"
+    "Tipo_Insumo": "TINTAS IMPRESSORA"
   },
   {
     "Produto": "MOLDURAS",
@@ -2211,7 +2391,7 @@ const DADOS_BOM = [
     "Consumo_M3": 1.73283,
     "Consumo_Peca": 0.01493822,
     "Unidade_Medida": "L",
-    "Tipo_Insumo": "TINTA UV"
+    "Tipo_Insumo": "TINTAS IMPRESSORA"
   },
   {
     "Produto": "MOLDURAS",
@@ -2427,7 +2607,7 @@ const DADOS_BOM = [
     "Consumo_M3": 14.25,
     "Consumo_Peca": 0.027777773,
     "Unidade_Medida": "UN",
-    "Tipo_Insumo": "CHAPA"
+    "Tipo_Insumo": "MDF"
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -2436,7 +2616,7 @@ const DADOS_BOM = [
     "Largura": 0.13335,
     "Comprimento": 1.2192,
     "Componente": "PASTA PARA EXTRUSAO - GESSO PRETO",
-    "Consumo_M3": 28.02364,
+    "Consumo_M3": 28.0,
     "Consumo_Peca": 0.054626979,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "GESSO PRETO"
@@ -2448,7 +2628,7 @@ const DADOS_BOM = [
     "Largura": 0.13335,
     "Comprimento": 1.2192,
     "Componente": "PRIMER PRETO FOSCO",
-    "Consumo_M3": 6.00507,
+    "Consumo_M3": 6.0,
     "Consumo_Peca": 0.011705781,
     "Unidade_Medida": "KG",
     "Tipo_Insumo": "PRIMER PRETO"
@@ -2463,7 +2643,7 @@ const DADOS_BOM = [
     "Consumo_M3": 0.63879,
     "Consumo_Peca": 0.0012452,
     "Unidade_Medida": "L",
-    "Tipo_Insumo": "TINTA"
+    "Tipo_Insumo": "TINTAS IMPRESSORA"
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -2679,7 +2859,7 @@ const DADOS_BOM = [
     "Consumo_M3": 14.25,
     "Consumo_Peca": 0.027777773,
     "Unidade_Medida": "UN",
-    "Tipo_Insumo": "CHAPA"
+    "Tipo_Insumo": "MDF"
   },
   {
     "Produto": "PAINEL RIPADO",
