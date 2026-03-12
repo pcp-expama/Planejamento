@@ -74,7 +74,7 @@
                     const statusEl = document.getElementById('data-status');
                     if(statusEl) {
                         statusEl.textContent = "• Online";
-                        statusEl.className = "text-base mt-1 text-green-500 font-bold";
+                        statusEl.className = "text-base mt-1 text-green-500 font-bold mode-mobile-text";
                     }
                 });
             } catch (e) { console.error("Firebase: Erro fatal.", e); }
@@ -121,6 +121,35 @@
 
             window.filtrarProducao();
         }
+
+        // --- ALTERNÂNCIA CELULAR / TV ---
+        window.setDeviceMode = function(mode) {
+            const body = document.body;
+            const btnMobile = document.getElementById('btn-mode-mobile');
+            const btnTv = document.getElementById('btn-mode-tv');
+
+            if (mode === 'mobile') {
+                body.classList.add('mode-mobile');
+                btnMobile.classList.replace('text-gray-500', 'text-white');
+                btnTv.classList.replace('text-white', 'text-gray-500');
+            } else {
+                body.classList.remove('mode-mobile');
+                btnTv.classList.replace('text-gray-500', 'text-white');
+                btnMobile.classList.replace('text-white', 'text-gray-500');
+            }
+
+            // Força a recriação do gráfico para ajustar os tamanhos de fonte dele
+            if (ALL_PRODUCAO_DATA.length > 0) {
+                window.filtrarProducao();
+            }
+        };
+
+        // Auto-detecção inicial
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth < 768) {
+                window.setDeviceMode('mobile');
+            }
+        });
 
         // --- FUNÇÃO DE FILTRO ATUALIZADA ---
         window.filtrarProducao = function() {
@@ -211,7 +240,7 @@
             const hojeIso = `${year}-${month}-${day}`;
 
             if (dadosAgrupados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4 text-base">Sem registros.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4">Sem registros.</td></tr>`;
             } else {
                 dadosAgrupados.forEach(item => {
                     totalPcts += item.quantidade_pacotes;
@@ -270,6 +299,10 @@
             // Registra o Plugin de Labels
             Chart.register(ChartDataLabels);
 
+            const isMobile = document.body.classList.contains('mode-mobile');
+            const dataLabelSize = isMobile ? 10 : 16;
+            const axisTickSize = isMobile ? 10 : 14;
+
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -290,7 +323,7 @@
                     indexAxis: 'y', 
                     layout: {
                         padding: {
-                            right: 70 // Espaço para os rótulos de dados ficarem maiores
+                            right: isMobile ? 40 : 70 // Espaço para os rótulos de dados ficarem maiores
                         }
                     },
                     plugins: {
@@ -302,7 +335,7 @@
                             color: '#FFFFFF', 
                             font: {
                                 weight: 'bold',
-                                size: 16 // Ampliado
+                                size: dataLabelSize // Ampliado ou compacto dependendo do modo
                             },
                             formatter: function(value, context) {
                                 return value + " pcts";
@@ -313,13 +346,13 @@
                         x: { 
                             beginAtZero: true, 
                             grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                            ticks: { color: '#9CA3AF', font: { size: 14 } } // Maior
+                            ticks: { color: '#9CA3AF', font: { size: axisTickSize } } 
                         },
                         y: { 
                             grid: { display: false },
                             ticks: { 
                                 color: '#D1D5DB', 
-                                font: { size: 14 }, // Maior
+                                font: { size: axisTickSize }, 
                                 callback: function(value) {
                                     const label = this.getLabelForValue(value);
                                     return label.length > 15 ? label.substr(0, 15) + '...' : label;
@@ -371,7 +404,7 @@
             const statusEl = document.getElementById('data-status');
             if(statusEl && !isSilent) {
                 statusEl.textContent = "Salvando...";
-                statusEl.className = "text-base mt-1 text-yellow-500 font-bold";
+                statusEl.className = "text-base mt-1 text-yellow-500 font-bold mode-mobile-text";
             }
             try {
                 if (isChecked) {
@@ -382,7 +415,7 @@
                 if(statusEl && !isSilent) {
                     setTimeout(() => {
                         statusEl.textContent = "Online • Salvo";
-                        statusEl.className = "text-base mt-1 text-green-500 font-bold";
+                        statusEl.className = "text-base mt-1 text-green-500 font-bold mode-mobile-text";
                     }, 500);
                 }
             } catch (e) {
@@ -528,34 +561,34 @@
             --icon-partial-color: #D97706;
         }
         
-        /* AUMENTO DA FONTE BASE DO BODY PARA TV AINDA MAIOR */
+        /* AUMENTO DA FONTE BASE DO BODY PARA TV */
         body { 
             background-color: var(--bg-primary); 
             color: var(--text-primary); 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            font-size: 1.3rem; /* Salto para 1.3rem */
+            font-size: 1.3rem; 
         }
         
         .card { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
-        .table-container { overflow-x: auto; max-height: 480px; } /* Pouquinho mais alto */
+        .table-container { overflow-x: auto; max-height: 480px; } 
         
         table { width: 100%; border-collapse: collapse; border-spacing: 0; margin-top: 1rem; border: 1px solid var(--border-color); }
         
-        /* OTIMIZAÇÃO DE TABELAS PARA CABER TEXTO AINDA MAIOR */
+        /* OTIMIZAÇÃO DE TABELAS */
         th, td { 
             border: 1px solid var(--border-color); 
-            padding: 0.8rem 0.5rem; /* Mais respiro vertical */
+            padding: 0.8rem 0.5rem; 
             text-align: left; 
             white-space: nowrap; 
         }
         th { background-color: #21262D; color: #FFF; font-weight: 700; position: sticky; top: 0; z-index: 10; font-size: 1.25rem; }
-        td { font-size: 1.35rem; } /* Muito mais legível de longe */
+        td { font-size: 1.35rem; } 
         
         tbody tr:nth-child(even):not(.completed-row) { background-color: rgba(22, 27, 34, 0.5); }
         tbody tr:hover:not(.completed-row) { background-color: #21262D; }
         .completed-row td { background-color: var(--completed-bg) !important; color: var(--completed-text); text-decoration: line-through; }
         
-        /* Checkbox BEM MAIOR global */
+        /* Checkbox */
         input[type="checkbox"] { transform: scale(1.6); cursor: pointer; } 
         .completed-row td input[type="checkbox"] { opacity: 0.7; } 
         input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.3; filter: grayscale(100%); }
@@ -566,7 +599,7 @@
         
         .metric-card { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 1.5rem; text-align: center; }
         .metric-label { color: var(--text-secondary); font-size: 1.3rem; margin-bottom: 0.5rem; display: block; font-weight: 500; }
-        .metric-value { font-size: 3.5rem; font-weight: 700; color: #FFF; } /* NÚMEROS AINDA MAIS GIGANTES PARA TV */
+        .metric-value { font-size: 3.5rem; font-weight: 700; color: #FFF; } 
         
         .btn { background-color: var(--accent-primary); color: #FFF; padding: 0.8rem 1rem; border-radius: 6px; font-weight: 600; font-size: 1.25rem; cursor: pointer; transition: background-color 0.2s; border: none; }
         .btn:hover { background-color: var(--accent-secondary); color: #000; }
@@ -636,13 +669,52 @@
             outline: none;
             border-color: var(--accent-primary);
         }
+
+        /* =========================================
+           AJUSTES PARA MODO CELULAR (OVERRIDE)
+           ========================================= */
+        body.mode-mobile { font-size: 0.9rem !important; }
+        .mode-mobile h1 { font-size: 1.4rem !important; margin-bottom: 0.2rem !important; }
+        .mode-mobile h2 { font-size: 1.1rem !important; margin-bottom: 0.5rem !important; }
+        .mode-mobile p.text-xl { font-size: 0.9rem !important; }
+        .mode-mobile .card { padding: 1rem !important; margin-bottom: 1rem !important; }
+        .mode-mobile th { font-size: 0.85rem !important; padding: 0.4rem 0.5rem !important; }
+        .mode-mobile td { font-size: 0.85rem !important; padding: 0.4rem 0.5rem !important; }
+        .mode-mobile input[type="checkbox"] { transform: scale(1.1) !important; }
+        .mode-mobile .metric-label { font-size: 0.8rem !important; }
+        .mode-mobile .metric-value { font-size: 1.8rem !important; }
+        .mode-mobile .btn { font-size: 0.9rem !important; padding: 0.5rem 0.75rem !important; }
+        .mode-mobile .btn-filter { font-size: 0.85rem !important; padding: 0.3rem 0.5rem !important; }
+        .mode-mobile .po-select-list option { font-size: 0.85rem !important; padding: 0.3rem !important; }
+        .mode-mobile .po-select-list { height: 8rem !important; }
+        .mode-mobile #scroller-content { font-size: 1rem !important; line-height: 1.5rem !important; }
+        .mode-mobile #completed-po-scroller { height: 2.5rem !important; margin-bottom: 1rem !important; }
+        .mode-mobile .modal-title { font-size: 1.2rem !important; }
+        .mode-mobile .modal-content { font-size: 0.9rem !important; }
+        .mode-mobile .mrp-table-modal th, .mode-mobile .mrp-table-modal td { font-size: 0.85rem !important; padding: 0.5rem !important; }
+        .mode-mobile .input-dark { font-size: 0.9rem !important; padding: 0.5rem !important; }
+        .mode-mobile .admin-status { font-size: 0.85rem !important; padding: 0.3rem !important; }
+        .mode-mobile .mrp-toggle-icon { font-size: 1.2rem !important; }
+        .mode-mobile span.text-2xl { font-size: 1rem !important; } /* Icones pequenos */
+        .mode-mobile .table-container { max-height: 350px !important; }
+        .mode-mobile .mode-mobile-text { font-size: 0.8rem !important; }
     </style>
 </head>
 <body class="grid grid-cols-12 gap-4 p-4 min-h-screen">
 
-    <aside class="col-span-12 md:col-span-2 card flex flex-col">
+    <aside class="col-span-12 md:col-span-2 card flex flex-col relative">
+        
+        <div class="flex justify-center gap-6 mb-4 bg-[#21262D] rounded-full p-2 w-max self-center border border-gray-700">
+            <button onclick="window.setDeviceMode('mobile')" id="btn-mode-mobile" class="text-gray-500 hover:text-white transition px-2" title="Modo Celular">
+                <i class="fas fa-mobile-alt text-xl"></i>
+            </button>
+            <button onclick="window.setDeviceMode('tv')" id="btn-mode-tv" class="text-white transition px-2" title="Modo TV/PC">
+                <i class="fas fa-desktop text-xl"></i>
+            </button>
+        </div>
+
         <img id="logo" src="logo.png" alt="Logo" class="mb-5 max-h-17 object-contain self-center" onerror="this.style.display='none'; document.getElementById('logo-error').style.display='block';">
-        <p id="logo-error" class="text-base text-red-400 text-center mb-4" style="display: none;">Logo não encontrada</p>
+        <p id="logo-error" class="text-base text-red-400 text-center mb-4 mode-mobile-text" style="display: none;">Logo não encontrada</p>
 
         <div id="admin-btn" class="admin-status admin-locked" onclick="toggleAdmin()">
             <i class="fas fa-lock mr-2"></i> Acesso: Visitante
@@ -674,30 +746,30 @@
             <button id="clear-all-po" class="btn-filter w-1/2">Limpar</button>
         </div>
         <div id="po-filter-container" class="mb-2 flex-grow overflow-y-auto" style="height: 12rem;">
-            <p id="po-loading" class="text-base text-gray-400">Carregando POs...</p>
+            <p id="po-loading" class="text-base text-gray-400 mode-mobile-text">Carregando POs...</p>
              <select id="po-select" multiple class="po-select-list"></select>
         </div>
-        <p id="po-empty" class="text-base text-green-400 hidden">Nenhum pedido!</p>
+        <p id="po-empty" class="text-base text-green-400 hidden mode-mobile-text">Nenhum pedido!</p>
         
         <br>
 
         <h2 class="text-2xl font-semibold mb-2 border-b border-gray-700 pb-2">Reserva Estoque</h2>
-        <p class="text-base text-gray-400 mb-2">Subtrair do estoque.</p>
+        <p class="text-base text-gray-400 mb-2 mode-mobile-text">Subtrair do estoque.</p>
         <div class="mb-2 flex gap-1">
             <button id="select-all-po-reserva" class="btn-filter w-1/2">Todas</button>
             <button id="clear-all-po-reserva" class="btn-filter w-1/2">Limpar</button>
         </div>
         <div id="po-filter-container-reserva" class="mb-4 flex-grow overflow-y-auto" style="height: 12rem;">
-            <p id="po-loading-reserva" class="text-base text-gray-400">Carregando...</p>
+            <p id="po-loading-reserva" class="text-base text-gray-400 mode-mobile-text">Carregando...</p>
              <select id="po-select-reserva" multiple class="po-select-list"></select>
         </div>
-        <p id="po-empty-reserva" class="text-base text-green-400 hidden">Nenhum pedido!</p>
+        <p id="po-empty-reserva" class="text-base text-green-400 hidden mode-mobile-text">Nenhum pedido!</p>
         
         <div class="mt-auto border-t border-gray-700 pt-4">
-            <div id="data-status" class="text-base text-gray-400">Verificando...</div>
-             <div id="data-last-updated" class="text-base text-gray-500 mt-1"></div>
-             <p class="text-base text-gray-500 mt-2">Versão: 1.1.0 </p>
-             <p class="text-base text-gray-500 mt-1">© Copyright 2026 Flora Exportadora</p>
+            <div id="data-status" class="text-base text-gray-400 mode-mobile-text">Verificando...</div>
+             <div id="data-last-updated" class="text-base text-gray-500 mt-1 mode-mobile-text"></div>
+             <p class="text-base text-gray-500 mt-2 mode-mobile-text">Versão: 1.1.0 </p>
+             <p class="text-base text-gray-500 mt-1 mode-mobile-text">© Copyright 2026 Flora Exportadora</p>
         </div>
     </aside>
 
@@ -765,7 +837,7 @@
 
         <div class="card">
             <h2 class="text-3xl font-semibold mb-2">Tabela de Itens em Carteira</h2>
-            <p class="text-base text-gray-400 mb-4 italic">* Apenas administradores podem alterar o status de conclusão.</p>
+            <p class="text-base text-gray-400 mb-4 italic mode-mobile-text">* Apenas administradores podem alterar o status de conclusão.</p>
              <div class="table-container">
                 <table id="detail-table">
                     <thead>
@@ -784,7 +856,7 @@
                     </tbody>
                 </table>
              </div>
-             <p id="detail-empty" class="text-lg text-green-400 mt-4 hidden">Nenhum item em carteira para as POs selecionadas!</p>
+             <p id="detail-empty" class="text-lg text-green-400 mt-4 hidden mode-mobile-text">Nenhum item em carteira para as POs selecionadas!</p>
         </div>
     </main>
 
@@ -821,11 +893,11 @@
 
         <div class="mt-auto border-t border-gray-700 pt-4">
             <div class="flex justify-between items-center mb-2">
-                <span class="text-base text-gray-400 font-bold">Total Pacotes:</span>
+                <span class="text-base text-gray-400 font-bold mode-mobile-text">Total Pacotes:</span>
                 <span id="total-hist-pcts" class="text-2xl font-bold text-white">0</span>
             </div>
             <div class="flex justify-between items-center">
-                <span class="text-base text-gray-400 font-bold">Total Volume:</span>
+                <span class="text-base text-gray-400 font-bold mode-mobile-text">Total Volume:</span>
                 <span id="total-hist-m3" class="text-2xl font-bold text-green-400">0.000 m³</span>
             </div>
         </div>
@@ -855,21 +927,21 @@
         </div>
         <div class="modal-content flex flex-col gap-4">
             <div>
-                <label class="text-base text-gray-400 font-bold uppercase mb-1 block">Data</label>
+                <label class="text-base text-gray-400 font-bold uppercase mb-1 block mode-mobile-text">Data</label>
                 <input type="date" id="prod-data" class="input-dark">
             </div>
             <div>
-                <label class="text-base text-gray-400 font-bold uppercase mb-1 block">Produto</label>
+                <label class="text-base text-gray-400 font-bold uppercase mb-1 block mode-mobile-text">Produto</label>
                 <select id="prod-select" onchange="window.calcularVolumeProducao()" class="input-dark">
                     <option value="" disabled selected>Selecione...</option>
                 </select>
             </div>
             <div>
-                <label class="text-base text-gray-400 font-bold uppercase mb-1 block">Quantidade (Pacotes)</label>
+                <label class="text-base text-gray-400 font-bold uppercase mb-1 block mode-mobile-text">Quantidade (Pacotes)</label>
                 <input type="number" id="prod-qtd" placeholder="Ex: 10" oninput="window.calcularVolumeProducao()" class="input-dark">
             </div>
             <div>
-                <label class="text-base text-gray-400 font-bold uppercase mb-1 block">Volume Total (m³)</label>
+                <label class="text-base text-gray-400 font-bold uppercase mb-1 block mode-mobile-text">Volume Total (m³)</label>
                 <input type="text" id="prod-m3" readonly placeholder="0.00000 m³" class="input-dark bg-black/30 font-bold text-green-400">
             </div>
         </div>
