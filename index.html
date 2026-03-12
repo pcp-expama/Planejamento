@@ -11,9 +11,6 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -43,7 +40,6 @@
         
         // Dados globais de produção para filtro
         let ALL_PRODUCAO_DATA = [];
-        let chartInstance = null; // Variável para controlar o gráfico
         
         // --- CONFIGURAÇÃO PADRÃO: HOJE ---
         window.filterMode = 'today'; 
@@ -93,7 +89,7 @@
                         ALL_PRODUCAO_DATA.push(data);
                     });
                     
-                    // Atualiza a tela com o filtro atual (que agora começa como Today)
+                    // Atualiza a tela com o filtro atual
                     window.filtrarProducao();
                 });
             } catch (e) { console.error("Erro ao ler produção:", e); }
@@ -137,11 +133,6 @@
                 btnTv.classList.replace('text-gray-500', 'text-white');
                 btnMobile.classList.replace('text-white', 'text-gray-500');
             }
-
-            // Força a recriação do gráfico para ajustar os tamanhos de fonte dele
-            if (ALL_PRODUCAO_DATA.length > 0) {
-                window.filtrarProducao();
-            }
         };
 
         // Auto-detecção inicial
@@ -177,19 +168,15 @@
                 const itemDateStr = item.data; 
                 
                 let valid = true;
-                // Comparação de Strings YYYY-MM-DD
                 if (itemDateStr < dtInicio) valid = false;
                 if (itemDateStr > dtFim) valid = false;
                 
                 return valid;
             });
 
-            // 1. Agrupar dados para a Tabela (Visual)
+            // Agrupar dados para a Tabela (Visual)
             const dadosAgrupadosTabela = agruparDadosPorDataEProduto(dadosFiltrados);
             renderizarTabelaProducao(dadosAgrupadosTabela);
-
-            // 2. Agrupar dados para o Gráfico (Total por Produto no período)
-            atualizarGrafico(dadosFiltrados);
         }
 
         // --- FUNÇÃO DE AGRUPAMENTO VISUAL ---
@@ -197,7 +184,6 @@
             const mapa = {};
 
             dados.forEach(item => {
-                // Chave única: Data + Produto
                 const chave = `${item.data}||${item.produto}`;
                 
                 if (!mapa[chave]) {
@@ -218,7 +204,7 @@
                 }
                 mapa[chave].volume_m3 += vol;
                 
-                // Guarda o ID e timestamp para saber qual apagar (o mais recente primeiro, pois a query original já é desc)
+                // Guarda o ID e timestamp para saber qual apagar
                 mapa[chave].ids_originais.push({ id: item.id, timestamp: item.timestamp });
             });
 
@@ -249,7 +235,6 @@
                     const dataFormatada = item.data ? item.data.split('-').reverse().slice(0,2).join('/') : '--/--';
                     
                     // --- TRAVA DE SEGURANÇA VISUAL ---
-                    // Botão de Delete só aparece se for HOJE E se for ADMIN
                     const isToday = item.data === hojeIso;
                     const canDelete = isToday && window.isAdmin; 
                     
@@ -274,97 +259,7 @@
             document.getElementById('total-hist-m3').textContent = totalM3.toFixed(3) + ' m³';
         }
 
-        // --- LÓGICA DO GRÁFICO (CHART.JS) ---
-        function atualizarGrafico(dadosBrutos) {
-            const ctx = document.getElementById('producaoChart').getContext('2d');
-            
-            // Agrupar TOTAL de pacotes por Produto
-            const totaisPorProduto = {};
-            dadosBrutos.forEach(item => {
-                if(!totaisPorProduto[item.produto]) totaisPorProduto[item.produto] = 0;
-                totaisPorProduto[item.produto] += (item.quantidade_pacotes || 0);
-            });
-
-            const labels = Object.keys(totaisPorProduto);
-            const values = Object.values(totaisPorProduto);
-            
-            const lista = labels.map((label, i) => ({ label, value: values[i] }));
-            lista.sort((a, b) => b.value - a.value); 
-            const topLista = lista.slice(0, 10); 
-
-            if (chartInstance) {
-                chartInstance.destroy(); 
-            }
-
-            // Registra o Plugin de Labels
-            Chart.register(ChartDataLabels);
-
-            const isMobile = document.body.classList.contains('mode-mobile');
-            const dataLabelSize = isMobile ? 10 : 16;
-            const axisTickSize = isMobile ? 10 : 14;
-
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: topLista.map(i => i.label),
-                    datasets: [{
-                        label: 'Pacotes Produzidos',
-                        data: topLista.map(i => i.value),
-                        backgroundColor: 'rgba(74, 222, 128, 0.6)', 
-                        borderColor: 'rgba(34, 197, 94, 1)', 
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                plugins: [ChartDataLabels], 
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y', 
-                    layout: {
-                        padding: {
-                            right: isMobile ? 40 : 70 // Espaço para os rótulos de dados ficarem maiores
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: false }, 
-                        datalabels: {
-                            anchor: 'end', 
-                            align: 'end',  
-                            color: '#FFFFFF', 
-                            font: {
-                                weight: 'bold',
-                                size: dataLabelSize // Ampliado ou compacto dependendo do modo
-                            },
-                            formatter: function(value, context) {
-                                return value + " pcts";
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { 
-                            beginAtZero: true, 
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                            ticks: { color: '#9CA3AF', font: { size: axisTickSize } } 
-                        },
-                        y: { 
-                            grid: { display: false },
-                            ticks: { 
-                                color: '#D1D5DB', 
-                                font: { size: axisTickSize }, 
-                                callback: function(value) {
-                                    const label = this.getLabelForValue(value);
-                                    return label.length > 15 ? label.substr(0, 15) + '...' : label;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // --- LÓGICA DE EXCLUSÃO (TRAVADA POR SENHA) ---
+        // --- LÓGICA DE EXCLUSÃO (APAGAR APENAS O ÚLTIMO LANÇAMENTO) ---
         window.tentarExcluirLancamento = async function(listaIds) {
             // TRAVA DE SEGURANÇA 1
             if (!window.isAdmin) {
@@ -460,7 +355,7 @@
         window.abrirModalProducao = function() {
             if (!window.isAdmin) {
                 alert("ACESSO RESTRITO: É necessário senha de administrador para lançar produção.");
-                toggleAdmin(); // Chama a função de login
+                window.toggleAdmin(); // Chama a função de login
                 return;
             }
 
@@ -561,7 +456,6 @@
             --icon-partial-color: #D97706;
         }
         
-        /* AUMENTO DA FONTE BASE DO BODY PARA TV */
         body { 
             background-color: var(--bg-primary); 
             color: var(--text-primary); 
@@ -569,24 +463,37 @@
             font-size: 1.3rem; 
         }
         
-        .card { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
-        .table-container { overflow-x: auto; max-height: 480px; } 
+        .card { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 1.5rem; }
+        .table-container { overflow-x: auto; flex-grow: 1; } 
         
         table { width: 100%; border-collapse: collapse; border-spacing: 0; margin-top: 1rem; border: 1px solid var(--border-color); }
         
-        /* OTIMIZAÇÃO DE TABELAS */
-        th, td { 
-            border: 1px solid var(--border-color); 
-            padding: 0.8rem 0.5rem; 
-            text-align: left; 
-            white-space: nowrap; 
-        }
+        /* OTIMIZAÇÃO GERAL DE TABELAS */
+        th, td { border: 1px solid var(--border-color); padding: 0.8rem 0.5rem; text-align: left; white-space: nowrap; }
         th { background-color: #21262D; color: #FFF; font-weight: 700; position: sticky; top: 0; z-index: 10; font-size: 1.25rem; }
         td { font-size: 1.35rem; } 
         
         tbody tr:nth-child(even):not(.completed-row) { background-color: rgba(22, 27, 34, 0.5); }
         tbody tr:hover:not(.completed-row) { background-color: #21262D; }
         .completed-row td { background-color: var(--completed-bg) !important; color: var(--completed-text); text-decoration: line-through; }
+
+        /* =========================================
+           AJUSTES ESPECÍFICOS: TABELA MPS
+           ========================================= */
+        #dashboard-table th { font-size: 1.8rem; } 
+        #dashboard-table td { font-size: 1.9rem; } 
+
+        /* =========================================
+           AJUSTES ESPECÍFICOS: TABELA DE ITENS EM CARTEIRA
+           ========================================= */
+        #detail-table th { font-size: 1.8rem; } 
+        #detail-table td { font-size: 1.8rem; } 
+
+        /* =========================================
+           AJUSTES ESPECÍFICOS: TABELA HISTÓRICO DE PRODUÇÃO
+           ========================================= */
+        #history-table th { font-size: 1.2rem; } 
+        #history-table td { font-size: 1.10rem; } 
         
         /* Checkbox */
         input[type="checkbox"] { transform: scale(1.6); cursor: pointer; } 
@@ -611,7 +518,6 @@
         .btn-filter { background-color: var(--bg-secondary); color: var(--accent-primary1); padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 1.1rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s; border: 1px solid var(--border-color); margin-right: 0.5rem; }
         .btn-filter:hover { background-color: var(--accent-secondary); color: var(--bg-primary); border-color: var(--accent-secondary); }
         
-        /* ESTILOS DOS BOTÕES DE FILTRO */
         .btn-active { background-color: var(--highlight-green); color: white; border-color: var(--highlight-green); }
         .btn-inactive { background-color: var(--bg-secondary); color: var(--text-secondary); border-color: var(--border-color); }
         .btn-inactive:hover { background-color: #21262D; color: var(--text-primary); }
@@ -630,8 +536,7 @@
         @keyframes pulse-red { 0%, 100% { background-color: var(--highlight-bg-red); } 50% { background-color: rgba(218, 54, 51, 0.4); } }
         .pulse-red { animation: pulse-red 2s infinite ease-in-out; }
         
-        /* SCROLLER MAIOR PARA TV */
-        #completed-po-scroller { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0; margin-bottom: 1.5rem; overflow: hidden; height: 3.8rem; display: none; white-space: nowrap; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
+        #completed-po-scroller { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0; overflow: hidden; height: 3.8rem; display: none; white-space: nowrap; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
         #scroller-content { display: inline-block; padding-left: 100%; animation: scroll-left 30s linear infinite; color: var(--icon-completed-color); font-weight: bold; font-size: 1.6rem; line-height: 2.8rem; }
         @keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
         #completed-po-scroller:hover #scroller-content { animation-play-state: paused; }
@@ -651,24 +556,12 @@
         .mrp-toggle-icon { cursor: pointer; font-weight: bold; font-size: 1.8rem; color: var(--accent-primary1); user-select: none; display: inline-block; width: 30px; text-align: center; }
         .mrp-toggle-icon:hover { color: var(--accent-secondary); }
         
-        /* ADMIN BTN */
         .admin-status { font-size: 1.1rem; padding: 0.5rem 0.5rem; border-radius: 4px; margin-bottom: 1rem; text-align: center; border: 1px solid transparent; cursor: pointer; }
         .admin-locked { border-color: #30363D; color: #8B949E; background-color: #161B22; }
         .admin-unlocked { border-color: #238636; color: #3fb950; background-color: rgba(35, 134, 54, 0.1); }
         
-        .input-dark {
-            background-color: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 0.85rem;
-            border-radius: 4px;
-            width: 100%;
-            font-size: 1.3rem;
-        }
-        .input-dark:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-        }
+        .input-dark { background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.85rem; border-radius: 4px; width: 100%; font-size: 1.3rem; }
+        .input-dark:focus { outline: none; border-color: var(--accent-primary); }
 
         /* =========================================
            AJUSTES PARA MODO CELULAR (OVERRIDE)
@@ -677,9 +570,11 @@
         .mode-mobile h1 { font-size: 1.4rem !important; margin-bottom: 0.2rem !important; }
         .mode-mobile h2 { font-size: 1.1rem !important; margin-bottom: 0.5rem !important; }
         .mode-mobile p.text-xl { font-size: 0.9rem !important; }
-        .mode-mobile .card { padding: 1rem !important; margin-bottom: 1rem !important; }
-        .mode-mobile th { font-size: 0.85rem !important; padding: 0.4rem 0.5rem !important; }
-        .mode-mobile td { font-size: 0.85rem !important; padding: 0.4rem 0.5rem !important; }
+        .mode-mobile .card { padding: 1rem !important; }
+        .mode-mobile th, .mode-mobile td { font-size: 0.85rem !important; padding: 0.4rem 0.5rem !important; }
+        .mode-mobile #dashboard-table th, .mode-mobile #dashboard-table td { font-size: 0.85rem !important; } 
+        .mode-mobile #detail-table th, .mode-mobile #detail-table td { font-size: 0.85rem !important; }
+        .mode-mobile #history-table th, .mode-mobile #history-table td { font-size: 0.85rem !important; }
         .mode-mobile input[type="checkbox"] { transform: scale(1.1) !important; }
         .mode-mobile .metric-label { font-size: 0.8rem !important; }
         .mode-mobile .metric-value { font-size: 1.8rem !important; }
@@ -688,23 +583,25 @@
         .mode-mobile .po-select-list option { font-size: 0.85rem !important; padding: 0.3rem !important; }
         .mode-mobile .po-select-list { height: 8rem !important; }
         .mode-mobile #scroller-content { font-size: 1rem !important; line-height: 1.5rem !important; }
-        .mode-mobile #completed-po-scroller { height: 2.5rem !important; margin-bottom: 1rem !important; }
+        .mode-mobile #completed-po-scroller { height: 2.5rem !important; }
         .mode-mobile .modal-title { font-size: 1.2rem !important; }
         .mode-mobile .modal-content { font-size: 0.9rem !important; }
         .mode-mobile .mrp-table-modal th, .mode-mobile .mrp-table-modal td { font-size: 0.85rem !important; padding: 0.5rem !important; }
         .mode-mobile .input-dark { font-size: 0.9rem !important; padding: 0.5rem !important; }
         .mode-mobile .admin-status { font-size: 0.85rem !important; padding: 0.3rem !important; }
         .mode-mobile .mrp-toggle-icon { font-size: 1.2rem !important; }
-        .mode-mobile span.text-2xl { font-size: 1rem !important; } /* Icones pequenos */
-        .mode-mobile .table-container { max-height: 350px !important; }
+        .mode-mobile span.text-2xl { font-size: 1rem !important; } 
         .mode-mobile .mode-mobile-text { font-size: 0.8rem !important; }
     </style>
 </head>
-<body class="grid grid-cols-12 gap-4 p-4 min-h-screen">
+<body class="flex flex-col xl:flex-row gap-4 p-4 min-h-screen">
 
-    <aside class="col-span-12 md:col-span-2 card flex flex-col relative">
+    <aside class="w-full xl:w-[250px] card flex flex-col flex-shrink-0 !mb-0">
         
-        <div class="flex justify-center gap-6 mb-4 bg-[#21262D] rounded-full p-2 w-max self-center border border-gray-700">
+       <img id="logo" src="logo.png" alt="Logo" class="mb-3 max-h-[150px] object-contain self-center" onerror="this.style.display='none'; document.getElementById('logo-error').style.display='block';">
+        <p id="logo-error" class="text-base text-red-400 text-center mb-2 mode-mobile-text" style="display: none;">Logo não encontrada</p>
+
+        <div class="flex justify-center gap-6 mb-5 bg-[#21262D] rounded-full p-2 w-max self-center border border-gray-700">
             <button onclick="window.setDeviceMode('mobile')" id="btn-mode-mobile" class="text-gray-500 hover:text-white transition px-2" title="Modo Celular">
                 <i class="fas fa-mobile-alt text-xl"></i>
             </button>
@@ -713,47 +610,40 @@
             </button>
         </div>
 
-        <img id="logo" src="logo.png" alt="Logo" class="mb-5 max-h-17 object-contain self-center" onerror="this.style.display='none'; document.getElementById('logo-error').style.display='block';">
-        <p id="logo-error" class="text-base text-red-400 text-center mb-4 mode-mobile-text" style="display: none;">Logo não encontrada</p>
-
-        <div id="admin-btn" class="admin-status admin-locked" onclick="toggleAdmin()">
+        <div id="admin-btn" class="admin-status admin-locked" onclick="window.toggleAdmin()">
             <i class="fas fa-lock mr-2"></i> Acesso: Visitante
         </div>
 
-        <button id="btn-manual-save" class="btn btn-secondary w-full mb-6 hidden" onclick="window.forceManualSync()">
+        <button id="btn-manual-save" class="btn btn-secondary w-full mb-4 hidden" onclick="window.forceManualSync()">
             <i class="fas fa-cloud-upload-alt mr-2"></i> Salvar
         </button>
 
         <button id="reload-button" class="btn w-full mb-4">Recarregar Dados</button>
 
-        <button onclick="window.abrirModalProducao()" class="btn w-full mb-6 bg-gray-700 hover:bg-gray-600 text-white">
-            <i class="fas fa-clipboard-list mr-2"></i> Lançar Produção
+        <button onclick="window.abrirModalProducao()" class="btn w-full mb-4 bg-gray-700 hover:bg-gray-600 text-white">
+            <i class=></i> Lançar Produção
         </button>
 
         <a href="https://app.powerbi.com/links/B8TF3aTy_D?ctid=00efaec3-2fdf-400e-ab1c-0a8efb39d281&pbi_source=linkShare" 
-           class="btn-filter flex items-center w-full justify-center text-center py-3" 
+           class="btn-filter flex items-center w-full justify-center text-center py-3 mb-4" 
            target="_blank">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/New_Power_BI_Logo.svg/2048px-New_Power_BI_Logo.svg.png" 
-                 alt="Logotipo do Power BI" style="width: 24px; height: 24px; border: none;" class="mr-2">
+                 alt="Logotipo do Power BI" style="width: 10px; height: 10px; border: none;" class="mr-2">
             Dashboard Produção
         </a>
-
-        <br>
         
         <h2 class="text-2xl font-semibold mb-2 border-b border-gray-700 pb-2">Filtro de POs</h2>
         <div class="mb-2 flex gap-1">
             <button id="select-all-po" class="btn-filter w-1/2">Todas</button>
             <button id="clear-all-po" class="btn-filter w-1/2">Limpar</button>
         </div>
-        <div id="po-filter-container" class="mb-2 flex-grow overflow-y-auto" style="height: 12rem;">
+        <div id="po-filter-container" class="mb-4 flex-grow overflow-y-auto" style="height: 12rem;">
             <p id="po-loading" class="text-base text-gray-400 mode-mobile-text">Carregando POs...</p>
              <select id="po-select" multiple class="po-select-list"></select>
         </div>
         <p id="po-empty" class="text-base text-green-400 hidden mode-mobile-text">Nenhum pedido!</p>
-        
-        <br>
 
-        <h2 class="text-2xl font-semibold mb-2 border-b border-gray-700 pb-2">Reserva Estoque</h2>
+        <h2 class="text-2xl font-semibold mb-2 border-b border-gray-700 pb-2 mt-2">Reserva Estoque</h2>
         <p class="text-base text-gray-400 mb-2 mode-mobile-text">Subtrair do estoque.</p>
         <div class="mb-2 flex gap-1">
             <button id="select-all-po-reserva" class="btn-filter w-1/2">Todas</button>
@@ -773,40 +663,84 @@
         </div>
     </aside>
 
-    <main class="col-span-12 md:col-span-7">
-        <div class="card mb-4 flex flex-row justify-between items-center py-4">
-             <div>
-                 <h1 class="text-4xl font-bold mb-2">PCP - PLANEJAMENTO DE PRODUÇÃO</h1>
-                 <p id="painel-info" class="text-xl text-gray-400"></p>
-             </div>
-             <img src="EXPAMA.png" alt="Logo Direita" class="max-h-10 object-contain ml-4" onerror="this.style.display='none'">
-        </div>
-
-        <div id="completed-po-scroller">
-            <div id="scroller-content"></div>
-        </div>
-
-        <div id="global-status" class="status-box status-loading">Status: Carregando dados...</div>
-
-        <div class="card">
-            <h2 class="text-3xl font-semibold mb-6">Volume de Pedidos em Carteira Total</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="metric-card">
-                    <span class="metric-label">Total de POs em Carteira</span>
-                    <span id="metric-pos" class="metric-value">0 POs</span>
+    <main class="w-full xl:flex-1 flex flex-col min-w-0 gap-4">
+        
+        <div class="flex flex-col xl:flex-row gap-4 items-stretch">
+            
+            <div class="flex-1 flex flex-col gap-4 min-w-0">
+                <div class="card !mb-0 flex flex-row justify-between items-center py-4">
+                     <div>
+                         <h1 class="text-4xl font-bold mb-2">PCP - PLANEJAMENTO DE PRODUÇÃO</h1>
+                         <p id="painel-info" class="text-xl text-gray-400"></p>
+                     </div>
+                     <img src="EXPAMA.png" alt="Logo Direita" class="max-h-10 object-contain ml-4" onerror="this.style.display='none'">
                 </div>
-                <div class="metric-card">
-                    <span class="metric-label">Total de Pacotes na Carteira</span>
-                    <span id="metric-pacotes" class="metric-value">0 pcts</span>
+
+                <div id="completed-po-scroller" class="!mb-0">
+                    <div id="scroller-content"></div>
                 </div>
-                <div class="metric-card">
-                    <span class="metric-label">Total de M³ em Carteira</span>
-                    <span id="metric-m3" class="metric-value">0.000 m³</span>
+
+                <div id="global-status" class="status-box status-loading !mb-0">Status: Carregando dados...</div>
+
+                <div class="card flex-grow !mb-0">
+                    <h2 class="text-3xl font-semibold mb-6">Volume de Pedidos em Carteira Total</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="metric-card">
+                            <span class="metric-label">Total de POs em Carteira</span>
+                            <span id="metric-pos" class="metric-value">0 POs</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label">Total de Pacotes na Carteira</span>
+                            <span id="metric-pacotes" class="metric-value">0 pcts</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label">Total de M³ em Carteira</span>
+                            <span id="metric-m3" class="metric-value">0.000 m³</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="card">
+            <aside class="w-full xl:w-[450px] card flex flex-col flex-shrink-0 !mb-0">
+                <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">
+                    <i class="fas fa-history mr-2"></i> Histórico de Produção
+                </h2>
+                
+                <div class="flex gap-2 mb-4">
+                    <button id="btn-filter-today" onclick="window.setFilterMode('today')" class="btn-filter w-1/2 text-center justify-center btn-active text-lg py-2">Hoje</button>
+                    <button id="btn-filter-month" onclick="window.setFilterMode('month')" class="btn-filter w-1/2 text-center justify-center btn-inactive text-lg py-2">Mês Atual</button>
+                </div>
+
+                <div class="overflow-y-auto flex-grow mb-4 border border-white/10 rounded-md" style="min-height: 200px;">
+                    <table id="history-table" class="w-full">
+                        <thead class="bg-[#21262D] text-white sticky top-0">
+                            <tr>
+                                <th class="p-2 text-left font-bold">Data</th>
+                                <th class="p-2 text-left font-bold">Prod.</th>
+                                <th class="p-2 text-center font-bold">Pcts</th>
+                                <th class="p-2 text-right font-bold">M³</th>
+                                <th class="p-2 text-center font-bold"><i class="fas fa-trash"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="producao-table-body">
+                            <tr><td colspan="5" class="text-center text-gray-400 py-6">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-auto border-t border-gray-700 pt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-base text-gray-400 font-bold mode-mobile-text">Total Pacotes:</span>
+                        <span id="total-hist-pcts" class="text-2xl font-bold text-white">0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-base text-gray-400 font-bold mode-mobile-text">Total Volume:</span>
+                        <span id="total-hist-m3" class="text-2xl font-bold text-green-400">0.000 m³</span>
+                    </div>
+                </div>
+            </aside>
+
+        </div> <div class="card flex flex-col flex-grow !mb-0">
             <h2 class="text-3xl font-semibold mb-4">MPS - Plano Mestre de Produção</h2>
             <div class="table-container">
                 <table id="dashboard-table">
@@ -835,7 +769,7 @@
             </div>
         </div>
 
-        <div class="card">
+        <div class="card flex flex-col flex-grow !mb-0">
             <h2 class="text-3xl font-semibold mb-2">Tabela de Itens em Carteira</h2>
             <p class="text-base text-gray-400 mb-4 italic mode-mobile-text">* Apenas administradores podem alterar o status de conclusão.</p>
              <div class="table-container">
@@ -858,56 +792,14 @@
              </div>
              <p id="detail-empty" class="text-lg text-green-400 mt-4 hidden mode-mobile-text">Nenhum item em carteira para as POs selecionadas!</p>
         </div>
+
     </main>
 
-    <aside class="col-span-12 md:col-span-3 card flex flex-col h-fit">
-        <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">
-            <i class="fas fa-history mr-2"></i> Histórico de Produção
-        </h2>
-        
-        <div class="flex gap-2 mb-4">
-            <button id="btn-filter-today" onclick="setFilterMode('today')" class="btn-filter w-1/2 text-center justify-center btn-active text-lg py-2">Hoje</button>
-            <button id="btn-filter-month" onclick="setFilterMode('month')" class="btn-filter w-1/2 text-center justify-center btn-inactive text-lg py-2">Mês Atual</button>
-        </div>
-
-        <div class="mb-4" style="height: 250px;">
-            <canvas id="producaoChart"></canvas>
-        </div>
-
-        <div class="overflow-y-auto max-h-[450px] mb-4 border border-white/10 rounded-md">
-            <table class="w-full">
-                <thead class="bg-[#21262D] text-white sticky top-0">
-                    <tr>
-                        <th class="p-2 text-left font-bold">Data</th>
-                        <th class="p-2 text-left font-bold">Prod.</th>
-                        <th class="p-2 text-center font-bold">Pcts</th>
-                        <th class="p-2 text-right font-bold">M³</th>
-                        <th class="p-2 text-center font-bold"><i class="fas fa-trash"></i></th>
-                    </tr>
-                </thead>
-                <tbody id="producao-table-body">
-                    <tr><td colspan="5" class="text-center text-gray-400 py-6">Carregando...</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="mt-auto border-t border-gray-700 pt-4">
-            <div class="flex justify-between items-center mb-2">
-                <span class="text-base text-gray-400 font-bold mode-mobile-text">Total Pacotes:</span>
-                <span id="total-hist-pcts" class="text-2xl font-bold text-white">0</span>
-            </div>
-            <div class="flex justify-between items-center">
-                <span class="text-base text-gray-400 font-bold mode-mobile-text">Total Volume:</span>
-                <span id="total-hist-m3" class="text-2xl font-bold text-green-400">0.000 m³</span>
-            </div>
-        </div>
-    </aside>
-
-    <div id="mrp-modal-overlay" class="modal-overlay" onclick="hideMRPModal()"></div>
+    <div id="mrp-modal-overlay" class="modal-overlay" onclick="window.hideMRPModal()"></div>
     <div id="mrp-modal-container" class="modal-container">
         <div class="modal-header">
             <h3 id="mrp-modal-title" class="modal-title">Necessidade de Insumos</h3>
-            <span id="mrp-modal-close" class="modal-close-btn" onclick="hideMRPModal()">&times;</span>
+            <span id="mrp-modal-close" class="modal-close-btn" onclick="window.hideMRPModal()">&times;</span>
         </div>
         <div id="mrp-modal-content" class="modal-content">
             <p>Calculando...</p>
@@ -954,9 +846,12 @@
     <script id="script-dados" src=""></script>
 
     <script> 
+        // Aqui incluímos todas as funções que precisam ser chamadas pelo HTML diretamente no objeto 'window'
+        // garantindo que não sofram com o escopo fechado do módulo Firebase
+
         const CAMINHO_JS = "dados_atuais.js";
         
-        // --- DADOS DE FALLBACK (PARA NÃO TRAVAR SE O ARQUIVO EXTERNO FALHAR) ---
+        // --- DADOS DE FALLBACK ---
         const FALLBACK_DATA = {
             estoque: [
                 { Produto: "Pinus (Exemplo)", Perfil: "Deck (Exemplo)", M3_Estoque_Liquido: 50, Pecas_Estoque_Liquido: 1000 }
@@ -979,14 +874,12 @@
         let lastDataLoadTime = null;
         let globalStatusTimeout = null;
         
-        // window.completionStatus agora é gerenciado pelo Firebase
         window.completionStatus = {};
         
         let bomCache = new Map();
         let G_FILTERED_PENDING_ITEMS = [];
         let G_DASHBOARD_DATA = [];
 
-        // === FUNÇÃO DE ADMINISTRAÇÃO (SEGURANÇA SIMPLES) ===
         function simpleHash(str) {
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
@@ -997,7 +890,8 @@
             return hash;
         }
 
-        function toggleAdmin() {
+        // Função tornada global para ser acessada pelo onclick do HTML
+        window.toggleAdmin = function() {
             if (window.isAdmin) {
                 window.isAdmin = false;
                 updateAdminUI();
@@ -1008,7 +902,6 @@
                     if (simpleHash(senha) === 110813) {
                         window.isAdmin = true;
                         updateAdminUI();
-                        // Recarrega a tabela de produção para mostrar/ocultar lixeiras
                         window.filtrarProducao(); 
                     } else {
                         alert("Senha incorreta.");
@@ -1021,15 +914,14 @@
         function updateAdminUI() {
             const btn = document.getElementById('admin-btn');
             const saveBtn = document.getElementById('btn-manual-save');
-            
             if (window.isAdmin) {
                 btn.className = 'admin-status admin-unlocked';
                 btn.innerHTML = '<i class="fas fa-unlock mr-2"></i> Acesso: Admin (PCP)';
-                if(saveBtn) saveBtn.classList.remove('hidden'); // MOSTRA BOTÃO DE SALVAR
+                if(saveBtn) saveBtn.classList.remove('hidden');
             } else {
                 btn.className = 'admin-status admin-locked';
                 btn.innerHTML = '<i class="fas fa-lock mr-2"></i> Acesso: Visitante';
-                if(saveBtn) saveBtn.classList.add('hidden'); // ESCONDE BOTÃO DE SALVAR
+                if(saveBtn) saveBtn.classList.add('hidden');
             }
         }
         
@@ -1041,10 +933,10 @@
             if (typeof num !== 'number' || isNaN(num)) return '0.000 m³';
             return num.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' m³';
         }
-         function formatPct(num) {
+        function formatPct(num) {
             if (typeof num !== 'number' || isNaN(num)) return '0 pcts';
             return formatNumber(Math.round(num), 0) + ' pcts';
-         }
+        }
         function formatPO(num) {
             if (typeof num !== 'number' || isNaN(num)) return '0 POs';
             return formatNumber(num, 0) + ' POs';
@@ -1131,7 +1023,12 @@
                 poSelectReserva.appendChild(optionReserva);
             });
         }
-        function renderSummary(summary) { document.getElementById('metric-pos').textContent = formatPO(summary.totalPOs); document.getElementById('metric-pacotes').textContent = formatPct(summary.totalPacotes); document.getElementById('metric-m3').textContent = formatM3(summary.totalM3); }
+
+        function renderSummary(summary) { 
+            document.getElementById('metric-pos').textContent = formatPO(summary.totalPOs); 
+            document.getElementById('metric-pacotes').textContent = formatPct(summary.totalPacotes); 
+            document.getElementById('metric-m3').textContent = formatM3(summary.totalM3); 
+        }
         
         function renderDashboard(dashboardData) {
             const tbody = document.getElementById('dashboard-table').querySelector('tbody'); 
@@ -1146,7 +1043,7 @@
                 const ppct = cpct ? ' pulse-red' : '';
                 let toggleIcon = '';
                 if (am3 > 0.001) {
-                    toggleIcon = `<span class="mrp-toggle-icon" onclick="showMRPModal('${item.Produto}', '${item.Perfil}')">+</span>`;
+                    toggleIcon = `<span class="mrp-toggle-icon" onclick="window.showMRPModal('${item.Produto}', '${item.Perfil}')">+</span>`;
                 }
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -1189,7 +1086,7 @@
                 tbody.innerHTML += `
                         <tr class="${rowClass}" data-item-id="${itemId}"> 
                             <td class="text-center">
-                                <input type="checkbox" class="form-checkbox" ${isItemCompleted ? 'checked' : ''} ${isDisabled} onchange="toggleItemCompletion(this)">
+                                <input type="checkbox" class="form-checkbox" ${isItemCompleted ? 'checked' : ''} ${isDisabled} onchange="window.toggleItemCompletion(this)">
                             </td> 
                             <td>${item.PO || 'N/A'}${poIndicatorIcon}</td> 
                             <td>${item.Cliente || 'N/A'}</td> 
@@ -1201,6 +1098,7 @@
             });
                renderCompletedPOScroller(completedPOs);
         }
+
         function renderCompletedPOScroller(completedPOs) {
              const scrollerC = document.getElementById('completed-po-scroller'); const scrollerCt = document.getElementById('scroller-content');
              if (completedPOs.length > 0) { scrollerCt.textContent = "POs Concluídas: " + completedPOs.join(' ✓ | ') + ' ✓'; scrollerC.style.display = 'block'; }
@@ -1412,13 +1310,13 @@
         
         window.updateAllVisuals = function() {
             renderDetailTable(G_FILTERED_PENDING_ITEMS);
-            recalculateAndRenderScroller();
+            window.recalculateAndRenderScroller();
         }
         
         window.updatePOVisualStatus = function(po) {
              const tbody = document.getElementById('detail-table').querySelector('tbody');
              const rowsForPO = tbody.querySelectorAll(`tr[data-item-id^="${po}|"]`);
-             if (rowsForPO.length === 0) { recalculateAndRenderScroller(); return; }
+             if (rowsForPO.length === 0) { window.recalculateAndRenderScroller(); return; }
              let total = 0; let completed = 0;
              rowsForPO.forEach(r => { total++; const id = r.getAttribute('data-item-id'); if (window.completionStatus[id] === true) completed++; });
              let state = 'pending'; let icon = '';
@@ -1434,7 +1332,7 @@
                  else if (state === 'partial') { poCell.innerHTML += icon; if (isItemDone) r.classList.add('completed-row'); }
                  else { if (isItemDone) r.classList.add('completed-row'); }
              });
-             recalculateAndRenderScroller();
+             window.recalculateAndRenderScroller();
         }
         
         window.recalculateAndRenderScroller = function() {
@@ -1449,14 +1347,13 @@
              completedPOsList.sort(); renderCompletedPOScroller(completedPOsList);
         }
 
-        // --- FUNÇÃO CORRIGIDA COM FALLBACK ---
         function carregarScriptDados() {
             const globalStatus = document.getElementById('global-status'); 
             const dataStatus = document.getElementById('data-status'); 
             const lastUpdated = document.getElementById('data-last-updated');
             
             globalStatus.textContent = `Carregando ${CAMINHO_JS}...`; 
-            globalStatus.className = 'status-box status-loading'; 
+            globalStatus.className = 'status-box status-loading !mb-0'; 
             globalStatus.style.opacity = '1'; 
             if (globalStatusTimeout) clearTimeout(globalStatusTimeout);
             dataStatus.textContent = 'Carregando...'; 
@@ -1466,7 +1363,6 @@
             const ts = new Date().getTime(); const src = `${CAMINHO_JS}?v=${ts}`;
             const scriptNovo = document.createElement('script'); scriptNovo.id = 'script-dados'; scriptNovo.src = src;
 
-            // Função helper para iniciar com dados (reais ou fake)
             const iniciarComDados = (estoque, pendentes, bom, origem) => {
                 console.log(`Iniciando com dados de: ${origem}`);
                 ALL_STOCK_ITEMS = estoque;
@@ -1478,12 +1374,12 @@
                 
                 if (ALL_PENDING_ITEMS.length === 0 && ALL_STOCK_ITEMS.length === 0) { 
                     globalStatus.textContent = `AVISO: Dados vazios (${origem}).`; 
-                    globalStatus.className = 'status-box status-loading'; 
+                    globalStatus.className = 'status-box status-loading !mb-0'; 
                     uniquePOs = []; selectedPOs.clear(); reservedPOs.clear(); 
                 } else {
                     const itemsEmCarteira = ALL_PENDING_ITEMS;
                     globalStatus.textContent = `SUCESSO: ${itemsEmCarteira.length} itens carregados (${origem}).`; 
-                    globalStatus.className = 'status-box status-success'; 
+                    globalStatus.className = 'status-box status-success !mb-0'; 
                     globalStatusTimeout = setTimeout(() => { globalStatus.style.opacity = '0'; }, 3000);
                     
                     selectedPOs = new Set([...selectedPOs].filter(po => uniquePOs.includes(po)));
@@ -1505,22 +1401,18 @@
                 if (typeof MOCK_ESTOQUE_LIQUIDO !== 'undefined' && 
                     typeof MOCK_DADOS_PENDENTES_DETALHADOS !== 'undefined' &&
                     typeof DADOS_BOM !== 'undefined') {
-                    // SUCESSO: Arquivo externo carregou e tem as variáveis
                     iniciarComDados(MOCK_ESTOQUE_LIQUIDO, MOCK_DADOS_PENDENTES_DETALHADOS, DADOS_BOM, "Arquivo Externo");
                 } else {
-                    // FALHA PARCIAL: Arquivo carregou mas não tem as variáveis (ou nomes errados)
                     console.warn("Arquivo carregado mas variáveis indefinidas. Usando Fallback.");
                     iniciarComDados(FALLBACK_DATA.estoque, FALLBACK_DATA.pendentes, FALLBACK_DATA.bom, "Exemplo (Fallback)");
-                    alert("Aviso: O arquivo 'dados_atuais.js' foi lido, mas as variáveis (MOCK_...) não foram encontradas. Usando dados de exemplo.");
+                    alert("Aviso: O arquivo 'dados_atuais.js' foi lido, mas as variáveis não foram encontradas. Usando dados de exemplo.");
                 }
             };
             
             scriptNovo.onerror = (e) => {
-                // FALHA TOTAL: Arquivo não encontrado (404)
                 console.error(`Erro ao carregar script: ${src}`, e);
                 console.warn("Usando Fallback devido a erro de carregamento.");
                 iniciarComDados(FALLBACK_DATA.estoque, FALLBACK_DATA.pendentes, FALLBACK_DATA.bom, "Exemplo (Fallback)");
-                // Opcional: alert("Não foi possível carregar 'dados_atuais.js'. Usando dados de exemplo.");
             };
 
             document.head.appendChild(scriptNovo);
