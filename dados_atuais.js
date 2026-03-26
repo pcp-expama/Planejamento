@@ -976,6 +976,36 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Enviado_M3_Calc": 39.331431,
     "Pendente_M3": 0.0,
     "Pendente_Pecas": 0.0
+  },
+  {
+    "PO": "4500410373",
+    "Cliente": "METRIE",
+    "Perfil": "LS4S",
+    "Produto": "MOLDURAS",
+    "Espessura": 0.017,
+    "Largura": 0.0381,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 4368,
+    "Solicitado_M3": 6.898608,
+    "Enviado_Pecas": 0.0,
+    "Enviado_M3_Calc": 0.0,
+    "Pendente_M3": 6.898608,
+    "Pendente_Pecas": 4368.0
+  },
+  {
+    "PO": "4500410373",
+    "Cliente": "METRIE",
+    "Perfil": "LS4S",
+    "Produto": "MOLDURAS",
+    "Espessura": 0.017,
+    "Largura": 0.0889,
+    "Comprimento": 2.4384,
+    "Solicitado_Pecas": 6048,
+    "Solicitado_M3": 22.287811,
+    "Enviado_Pecas": 0.0,
+    "Enviado_M3_Calc": 0.0,
+    "Pendente_M3": 22.287811,
+    "Pendente_Pecas": 6048.0
   }
 ];
 
