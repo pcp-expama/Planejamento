@@ -690,8 +690,8 @@
                             <span id="metric-pos" class="metric-value">0 POs</span>
                         </div>
                         <div class="metric-card">
-                            <span class="metric-label">Total de Pacotes na Carteira</span>
-                            <span id="metric-pacotes" class="metric-value">0 pcts</span>
+                            <span class="metric-label">Total de Mini Fardos na Carteira</span>
+                            <span id="metric-pacotes" class="metric-value">0 mini fardos</span>
                         </div>
                         <div class="metric-card">
                             <span class="metric-label">Total de M³ em Carteira</span>
@@ -717,7 +717,7 @@
                             <tr>
                                 <th class="p-2 text-left font-bold">Data</th>
                                 <th class="p-2 text-left font-bold">Prod.</th>
-                                <th class="p-2 text-center font-bold">Pcts</th>
+                                <th class="p-2 text-center font-bold">Mini Fardos</th>
                                 <th class="p-2 text-right font-bold">M³</th>
                                 <th class="p-2 text-center font-bold"><i class="fas fa-trash"></i></th>
                             </tr>
@@ -730,7 +730,7 @@
 
                 <div class="mt-auto border-t border-gray-700 pt-4">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-base text-gray-400 font-bold mode-mobile-text">Total Pacotes:</span>
+                        <span class="text-base text-gray-400 font-bold mode-mobile-text">Total Fardos:</span>
                         <span id="total-hist-pcts" class="text-2xl font-bold text-white">0</span>
                     </div>
                     <div class="flex justify-between items-center">
@@ -751,10 +751,10 @@
                             <th>Perfil</th>
                             <th>M³ Carteira</th>
                             <th>M³ Estoque</th>
-                            <th>Pcts Carteira</th>
-                            <th>Pcts Estoque</th>
+                            <th>Mini Fardos Carteira</th>
+                            <th>Mini Fardos Estoque</th>
                             <th>M³ A produzir</th>
-                            <th>Pcts A produzir</th>
+                            <th>Mini Fardos A produzir</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -781,7 +781,7 @@
                             <th>Cliente</th>
                             <th>Perfil</th>
                             <th>Produto</th>
-                            <th>Pcts Carteira</th>
+                            <th>Mini Fardos Carteira</th>
                             <th>M³ Carteira</th>
                         </tr>
                     </thead>
@@ -829,7 +829,7 @@
                 </select>
             </div>
             <div>
-                <label class="text-base text-gray-400 font-bold uppercase mb-1 block mode-mobile-text">Quantidade (Pacotes)</label>
+                <label class="text-base text-gray-400 font-bold uppercase mb-1 block mode-mobile-text">Quantidade (Fardos)</label>
                 <input type="number" id="prod-qtd" placeholder="Ex: 10" oninput="window.calcularVolumeProducao()" class="input-dark">
             </div>
             <div>
@@ -934,15 +934,45 @@
             return num.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' m³';
         }
         function formatPct(num) {
-            if (typeof num !== 'number' || isNaN(num)) return '0 pcts';
-            return formatNumber(Math.round(num), 0) + ' pcts';
+            if (typeof num !== 'number' || isNaN(num)) return '0 mini fardos';
+            return formatNumber(Math.round(num), 0) + ' mini fardos';
         }
         function formatPO(num) {
             if (typeof num !== 'number' || isNaN(num)) return '0 POs';
             return formatNumber(num, 0) + ' POs';
         }
 
-        function getPecasPorPacote(perfil) { return perfil === 'LS4S' ? 294 : 420; }
+        // --- LÓGICA CORRIGIDA: Agrupa por Largura E Comprimento ---
+        function getPecasPorPacote(item) {
+            const produto = (item.Produto || '').toUpperCase();
+            const perfil = (item.Perfil || '').toUpperCase();
+            const largura = parseFloat(item.Largura) || 0;
+            const comprimento = parseFloat(item.Comprimento) || 0;
+
+            if (produto.includes('PAINEL RIPADO')) {
+                return 420;
+            }
+
+            // Se tivermos a dimensão exata (Itens da Carteira)
+            if (largura > 0) {
+                if (Math.abs(largura - 0.0381) < 0.0001) {
+                    return 1092; // 1 1/2"
+                } else if (Math.abs(largura - 0.0889) < 0.0001) {
+                    return 504;  // 3 1/2"
+                } else if (Math.abs(largura - 0.1397) < 0.0001) {
+                    // Verifica o comprimento para a largura de 5 1/2"
+                    if (Math.abs(comprimento - 3.657) < 0.001) {
+                        return 210; // 5 1/2" x 12 pés
+                    } else {
+                        return 294; // 5 1/2" x 8 pés
+                    }
+                }
+            }
+
+            // Fallback para o Estoque (que não possui largura e comprimento no banco agrupado)
+            if (perfil === 'LS4S') return 294; // Assume o mais comum (5 1/2" 8')
+            return 420;
+        }
         
         function calcularResumoTotal(pendingItems) {
             const itemsEmCarteira = pendingItems.filter(item => (item.Pendente_Pecas || 0) > 0 || (item.Pendente_M3 || 0) > 0.001);
@@ -952,34 +982,47 @@
                 const pendentePecas = item.Pendente_Pecas || 0;
                 totalM3 += item.Pendente_M3 || 0;
                 if (pendentePecas > 0) {
-                    totalPacotes += Math.round(pendentePecas / getPecasPorPacote(item.Perfil));
+                    totalPacotes += Math.round(pendentePecas / getPecasPorPacote(item));
                 }
             });
             return { totalPOs, totalPacotes, totalM3 };
         }
         
         function calcularDashboard(filteredItems, adjustedStockItems) {
+            // Agora dividimos os fardos logo no agrupamento, pra respeitar larguras diferentes!
             const carteiraAgrupada = filteredItems.reduce((acc, item) => {
                 const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
-                if (!acc[key]) acc[key] = { Produto: item.Produto, Perfil: item.Perfil, Solicitado_Pecas: 0, Solicitado_M3: 0 };
-                acc[key].Solicitado_Pecas += item.Pendente_Pecas || 0; acc[key].Solicitado_M3 += item.Pendente_M3 || 0; return acc;
+                if (!acc[key]) acc[key] = { Produto: item.Produto, Perfil: item.Perfil, Solicitado_Pecas: 0, Solicitado_M3: 0, Pacotes_Carteira: 0 };
+                
+                acc[key].Solicitado_Pecas += item.Pendente_Pecas || 0; 
+                acc[key].Solicitado_M3 += item.Pendente_M3 || 0; 
+                acc[key].Pacotes_Carteira += (item.Pendente_Pecas || 0) / getPecasPorPacote(item);
+                
+                return acc;
             }, {});
+
             const estoqueMap = adjustedStockItems.reduce((acc, item) => {
                  const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
-                 acc[key] = { M3_Estoque_Liquido: item.M3_Estoque_Liquido || 0, Pecas_Estoque_Liquido: item.Pecas_Estoque_Liquido || 0 }; return acc;
+                 acc[key] = { M3_Estoque_Liquido: item.M3_Estoque_Liquido || 0, Pecas_Estoque_Liquido: item.Pecas_Estoque_Liquido || 0 }; 
+                 return acc;
             }, {});
+
             const dashboardData = [];
             Object.values(carteiraAgrupada).forEach(carteiraItem => {
                 const key = `${carteiraItem.Produto || 'N/A'}|${carteiraItem.Perfil || 'N/A'}`;
                 const estoqueItem = estoqueMap[key] || { M3_Estoque_Liquido: 0, Pecas_Estoque_Liquido: 0 };
-                const pecasPorPacote = getPecasPorPacote(carteiraItem.Perfil);
-                const m3Carteira = carteiraItem.Solicitado_M3; const pecasCarteira = carteiraItem.Solicitado_Pecas;
-                const m3Estoque = estoqueItem.M3_Estoque_Liquido; const pecasEstoque = estoqueItem.Pecas_Estoque_Liquido;
-                const m3AProduzir = Math.max(0, m3Carteira - m3Estoque); const pecasAProduzir = Math.max(0, pecasCarteira - pecasEstoque);
                 
-                const pacotesCarteira = Math.round(pecasCarteira / pecasPorPacote);
-                const pacotesEstoque = Math.floor(pecasEstoque / pecasPorPacote);
-                const pacotesAProduzir = Math.round(pecasAProduzir / pecasPorPacote);
+                const m3Carteira = carteiraItem.Solicitado_M3; 
+                const pecasCarteira = carteiraItem.Solicitado_Pecas;
+                const m3Estoque = estoqueItem.M3_Estoque_Liquido; 
+                const pecasEstoque = estoqueItem.Pecas_Estoque_Liquido;
+                const m3AProduzir = Math.max(0, m3Carteira - m3Estoque); 
+                const pecasAProduzir = Math.max(0, pecasCarteira - pecasEstoque);
+                
+                const pacotesCarteira = Math.round(carteiraItem.Pacotes_Carteira);
+                // Para o estoque (que não tem largura separada no SQL), usamos o fallback do Produto
+                const pacotesEstoque = Math.floor(pecasEstoque / getPecasPorPacote({ Produto: carteiraItem.Produto, Perfil: carteiraItem.Perfil }));
+                const pacotesAProduzir = Math.max(0, pacotesCarteira - pacotesEstoque);
 
                 dashboardData.push({
                     Produto: carteiraItem.Produto, Perfil: carteiraItem.Perfil,
@@ -988,16 +1031,18 @@
                     M3_A_Produzir: m3AProduzir, Pacotes_A_Produzir: pacotesAProduzir,
                 });
             });
+            
              adjustedStockItems.forEach(item => {
                 const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
                  if (!carteiraAgrupada[key] && (item.Pecas_Estoque_Liquido > 0 || item.M3_Estoque_Liquido > 0.001)) {
                         dashboardData.push({
                              Produto: item.Produto, Perfil: item.Perfil, M3_Carteira_Volume: 0, M3_Estoque_Liquido: item.M3_Estoque_Liquido,
-                             Pacotes_Carteira: 0, Pacotes_Estoque: Math.floor(item.Pecas_Estoque_Liquido / getPecasPorPacote(item.Perfil)),
+                             Pacotes_Carteira: 0, Pacotes_Estoque: Math.floor(item.Pecas_Estoque_Liquido / getPecasPorPacote(item)),
                              M3_A_Produzir: 0, Pacotes_A_Produzir: 0,
                         });
                   }
             });
+            
              dashboardData.sort((a, b) => { const pc = (a.Produto || '').localeCompare(b.Produto || ''); return pc !== 0 ? pc : (a.Perfil || '').localeCompare(b.Perfil || ''); });
             
             G_DASHBOARD_DATA = dashboardData;
@@ -1075,7 +1120,8 @@
                 const itemId = generateItemId(item); 
                 const isItemCompleted = window.completionStatus[itemId] === true; 
                 const poState = poCompletionState[item.PO || 'na'];
-                const emCarteiraPct = Math.round((item.Pendente_Pecas || 0) / getPecasPorPacote(item.Perfil)); const emCarteiraM3 = item.Pendente_M3 || 0;
+                const emCarteiraPct = Math.round((item.Pendente_Pecas || 0) / getPecasPorPacote(item)); 
+                const emCarteiraM3 = item.Pendente_M3 || 0;
                 let rowClass = ''; let poIndicatorIcon = '';
                 if (poState === 'full') { rowClass = 'completed-row'; poIndicatorIcon = '<span class="po-status-icon po-status-completed">✓</span>'; }
                 else if (poState === 'partial') { poIndicatorIcon = '<span class="po-status-icon po-status-partial">⚠️</span>'; if (isItemCompleted) rowClass = 'completed-row';}
@@ -1454,4 +1500,3 @@
     </script>
 </body>
 </html>
-
