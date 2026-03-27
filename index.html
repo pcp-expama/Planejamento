@@ -942,36 +942,38 @@
             return formatNumber(num, 0) + ' POs';
         }
 
-        // --- LÓGICA CORRIGIDA: Agrupa por Largura E Comprimento ---
+        // --- LÓGICA CIRÚRGICA: Função atualizada para validar Dimensões exatas ---
         function getPecasPorPacote(item) {
+            // Mantém a compatibilidade se o sistema passar apenas o nome do perfil
+            if (typeof item === 'string') return item === 'LS4S' ? 294 : 420;
+
             const produto = (item.Produto || '').toUpperCase();
             const perfil = (item.Perfil || '').toUpperCase();
             const largura = parseFloat(item.Largura) || 0;
             const comprimento = parseFloat(item.Comprimento) || 0;
 
+            // Regra do Painel Ripado (continua padrão de fábrica)
             if (produto.includes('PAINEL RIPADO')) {
                 return 420;
             }
 
-            // Se tivermos a dimensão exata (Itens da Carteira)
+            // Novas regras das Molduras baseadas na Largura (e Comprimento se necessário)
             if (largura > 0) {
                 if (Math.abs(largura - 0.0381) < 0.0001) {
-                    return 1092; // 1 1/2"
+                    return 1092;
                 } else if (Math.abs(largura - 0.0889) < 0.0001) {
-                    return 504;  // 3 1/2"
+                    return 504;
                 } else if (Math.abs(largura - 0.1397) < 0.0001) {
-                    // Verifica o comprimento para a largura de 5 1/2"
                     if (Math.abs(comprimento - 3.657) < 0.001) {
-                        return 210; // 5 1/2" x 12 pés
+                        return 210; // 12 pés
                     } else {
-                        return 294; // 5 1/2" x 8 pés
+                        return 294; // 8 pés
                     }
                 }
             }
 
-            // Fallback para o Estoque (que não possui largura e comprimento no banco agrupado)
-            if (perfil === 'LS4S') return 294; // Assume o mais comum (5 1/2" 8')
-            return 420;
+            // Fallback de segurança para Estoque (onde o banco não detalha a largura)
+            return perfil === 'LS4S' ? 294 : 420;
         }
         
         function calcularResumoTotal(pendingItems) {
@@ -982,6 +984,7 @@
                 const pendentePecas = item.Pendente_Pecas || 0;
                 totalM3 += item.Pendente_M3 || 0;
                 if (pendentePecas > 0) {
+                    // Cirúrgico: Substituído item.Perfil por item
                     totalPacotes += Math.round(pendentePecas / getPecasPorPacote(item));
                 }
             });
@@ -989,7 +992,7 @@
         }
         
         function calcularDashboard(filteredItems, adjustedStockItems) {
-            // Agora dividimos os fardos logo no agrupamento, pra respeitar larguras diferentes!
+            // Cirúrgico: Calcula os pacotes EXATOS antes de agrupar as larguras na tela
             const carteiraAgrupada = filteredItems.reduce((acc, item) => {
                 const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
                 if (!acc[key]) acc[key] = { Produto: item.Produto, Perfil: item.Perfil, Solicitado_Pecas: 0, Solicitado_M3: 0, Pacotes_Carteira: 0 };
@@ -1012,16 +1015,16 @@
                 const key = `${carteiraItem.Produto || 'N/A'}|${carteiraItem.Perfil || 'N/A'}`;
                 const estoqueItem = estoqueMap[key] || { M3_Estoque_Liquido: 0, Pecas_Estoque_Liquido: 0 };
                 
-                const m3Carteira = carteiraItem.Solicitado_M3; 
-                const pecasCarteira = carteiraItem.Solicitado_Pecas;
-                const m3Estoque = estoqueItem.M3_Estoque_Liquido; 
-                const pecasEstoque = estoqueItem.Pecas_Estoque_Liquido;
-                const m3AProduzir = Math.max(0, m3Carteira - m3Estoque); 
-                const pecasAProduzir = Math.max(0, pecasCarteira - pecasEstoque);
+                // Cirúrgico: Fallback de segurança para o estoque baseando-se apenas em Produto e Perfil
+                const fallbackPecasPorPacote = getPecasPorPacote({ Produto: carteiraItem.Produto, Perfil: carteiraItem.Perfil });
                 
+                const m3Carteira = carteiraItem.Solicitado_M3; const pecasCarteira = carteiraItem.Solicitado_Pecas;
+                const m3Estoque = estoqueItem.M3_Estoque_Liquido; const pecasEstoque = estoqueItem.Pecas_Estoque_Liquido;
+                const m3AProduzir = Math.max(0, m3Carteira - m3Estoque); const pecasAProduzir = Math.max(0, pecasCarteira - pecasEstoque);
+                
+                // Cirúrgico: Mantém as regras exatas de arredondamento original (Math.round e Math.floor)
                 const pacotesCarteira = Math.round(carteiraItem.Pacotes_Carteira);
-                // Para o estoque (que não tem largura separada no SQL), usamos o fallback do Produto
-                const pacotesEstoque = Math.floor(pecasEstoque / getPecasPorPacote({ Produto: carteiraItem.Produto, Perfil: carteiraItem.Perfil }));
+                const pacotesEstoque = Math.floor(pecasEstoque / fallbackPecasPorPacote);
                 const pacotesAProduzir = Math.max(0, pacotesCarteira - pacotesEstoque);
 
                 dashboardData.push({
@@ -1120,7 +1123,10 @@
                 const itemId = generateItemId(item); 
                 const isItemCompleted = window.completionStatus[itemId] === true; 
                 const poState = poCompletionState[item.PO || 'na'];
+                
+                // Cirúrgico: Substituído item.Perfil por item
                 const emCarteiraPct = Math.round((item.Pendente_Pecas || 0) / getPecasPorPacote(item)); 
+                
                 const emCarteiraM3 = item.Pendente_M3 || 0;
                 let rowClass = ''; let poIndicatorIcon = '';
                 if (poState === 'full') { rowClass = 'completed-row'; poIndicatorIcon = '<span class="po-status-icon po-status-completed">✓</span>'; }
