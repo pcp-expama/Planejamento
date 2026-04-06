@@ -17,7 +17,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, addDoc, deleteDoc, onSnapshot, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- SUAS CHAVES REAIS ---
         const firebaseConfig = {
@@ -37,18 +37,11 @@
         const db = getFirestore(app);
 
         window.isAdmin = false;
-        
-        // Dados globais de produção para filtro
-        let ALL_PRODUCAO_DATA = [];
-        
-        // --- CONFIGURAÇÃO PADRÃO: HOJE ---
-        window.filterMode = 'today'; 
 
         // Login
         signInAnonymously(auth).then(() => {
             console.log("Firebase: Login ok.");
             iniciarEscutaEmTempoReal();
-            iniciarEscutaProducao();
         }).catch((error) => {
             console.error("Firebase: Erro login.", error);
             const el = document.getElementById('data-status');
@@ -76,48 +69,6 @@
             } catch (e) { console.error("Firebase: Erro fatal.", e); }
         }
 
-        // --- ESCUTA DE PRODUÇÃO ---
-        function iniciarEscutaProducao() {
-            try {
-                const q = query(collection(db, "lancamentos_producao"), orderBy("timestamp", "desc"));
-                
-                onSnapshot(q, (snapshot) => {
-                    ALL_PRODUCAO_DATA = [];
-                    snapshot.forEach((doc) => {
-                        let data = doc.data();
-                        data.id = doc.id; // Guardar ID para exclusão
-                        ALL_PRODUCAO_DATA.push(data);
-                    });
-                    
-                    // Atualiza a tela com o filtro atual
-                    window.filtrarProducao();
-                });
-            } catch (e) { console.error("Erro ao ler produção:", e); }
-        }
-
-        // --- NOVA FUNÇÃO DE TROCA DE FILTRO (BOTÕES) ---
-        window.setFilterMode = function(mode) {
-            window.filterMode = mode;
-            
-            // Atualiza visual dos botões
-            const btnToday = document.getElementById('btn-filter-today');
-            const btnMonth = document.getElementById('btn-filter-month');
-            
-            if(mode === 'today') {
-                btnToday.classList.remove('btn-inactive');
-                btnToday.classList.add('btn-active');
-                btnMonth.classList.remove('btn-active');
-                btnMonth.classList.add('btn-inactive');
-            } else {
-                btnMonth.classList.remove('btn-inactive');
-                btnMonth.classList.add('btn-active');
-                btnToday.classList.remove('btn-active');
-                btnToday.classList.add('btn-inactive');
-            }
-
-            window.filtrarProducao();
-        }
-
         // --- ALTERNÂNCIA CELULAR / TV ---
         window.setDeviceMode = function(mode) {
             const body = document.body;
@@ -141,146 +92,6 @@
                 window.setDeviceMode('mobile');
             }
         });
-
-        // --- FUNÇÃO DE FILTRO ATUALIZADA ---
-        window.filtrarProducao = function() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hojeStr = `${year}-${month}-${day}`;
-            const inicioMesStr = `${year}-${month}-01`;
-
-            let dtInicio, dtFim;
-
-            if (window.filterMode === 'today') {
-                dtInicio = hojeStr;
-                dtFim = hojeStr;
-            } else {
-                dtInicio = inicioMesStr;
-                dtFim = hojeStr; 
-            }
-            
-            const dadosFiltrados = ALL_PRODUCAO_DATA.filter(item => {
-                if (!item.data) return false;
-                const itemDateStr = item.data; 
-                
-                let valid = true;
-                if (itemDateStr < dtInicio) valid = false;
-                if (itemDateStr > dtFim) valid = false;
-                
-                return valid;
-            });
-
-            // Agrupar dados para a Tabela (Visual)
-            const dadosAgrupadosTabela = agruparDadosPorDataEProduto(dadosFiltrados);
-            renderizarTabelaProducao(dadosAgrupadosTabela);
-        }
-
-        // --- FUNÇÃO DE AGRUPAMENTO VISUAL ---
-        function agruparDadosPorDataEProduto(dados) {
-            const mapa = {};
-
-            dados.forEach(item => {
-                const chave = `${item.data}||${item.produto}`;
-                
-                if (!mapa[chave]) {
-                    mapa[chave] = {
-                        data: item.data,
-                        produto: item.produto,
-                        quantidade_pacotes: 0,
-                        volume_m3: 0,
-                        ids_originais: [] 
-                    };
-                }
-
-                mapa[chave].quantidade_pacotes += (item.quantidade_pacotes || 0);
-                
-                let vol = parseFloat(item.volume_m3) || 0;
-                if(typeof item.volume_m3 === 'string' && item.volume_m3.includes('m')) {
-                    vol = parseFloat(item.volume_m3.split(' ')[0]);
-                }
-                mapa[chave].volume_m3 += vol;
-                
-                mapa[chave].ids_originais.push({ id: item.id, timestamp: item.timestamp });
-            });
-
-            return Object.values(mapa).sort((a,b) => b.data.localeCompare(a.data)); 
-        }
-
-        function renderizarTabelaProducao(dadosAgrupados) {
-            const tbody = document.getElementById('producao-table-body');
-            tbody.innerHTML = '';
-
-            let totalPcts = 0;
-            let totalM3 = 0;
-            
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hojeIso = `${year}-${month}-${day}`;
-
-            if (dadosAgrupados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4">Sem registros.</td></tr>`;
-            } else {
-                dadosAgrupados.forEach(item => {
-                    totalPcts += item.quantidade_pacotes;
-                    totalM3 += item.volume_m3;
-
-                    const dataFormatada = item.data ? item.data.split('-').reverse().slice(0,2).join('/') : '--/--';
-                    
-                    const isToday = item.data === hojeIso;
-                    const canDelete = isToday && window.isAdmin; 
-                    
-                    const deleteBtn = canDelete 
-                        ? `<button onclick='window.tentarExcluirLancamento(${JSON.stringify(item.ids_originais)})' class="text-red-500 hover:text-red-400 ml-2" title="Excluir lançamento de hoje"><i class="fas fa-trash"></i></button>` 
-                        : '';
-
-                    const row = document.createElement('tr');
-                    row.className = "hover:bg-white/5 border-b border-white/5";
-                    row.innerHTML = `
-                        <td class="p-2">${dataFormatada}</td>
-                        <td class="p-2 truncate" title="${item.produto}">${item.produto}</td>
-                        <td class="p-2 text-center font-bold text-white">${item.quantidade_pacotes}</td>
-                        <td class="p-2 text-right">${item.volume_m3.toFixed(3)}</td>
-                        <td class="p-2 text-center">${deleteBtn}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            }
-
-            document.getElementById('total-hist-pcts').textContent = totalPcts;
-            document.getElementById('total-hist-m3').textContent = totalM3.toFixed(3) + ' m³';
-        }
-
-        window.tentarExcluirLancamento = async function(listaIds) {
-            if (!window.isAdmin) {
-                alert("ACESSO NEGADO: Apenas administradores podem excluir registros.");
-                return;
-            }
-            if(!listaIds || listaIds.length === 0) return;
-
-            listaIds.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            const qtd = listaIds.length;
-            const ultimoId = listaIds[0].id;
-
-            let msg = "";
-            if(qtd > 1) {
-                msg = `Este registro visual é a soma de ${qtd} lançamentos.\nDeseja excluir apenas o ÚLTIMO lançamento realizado para corrigir o valor total?`;
-            } else {
-                msg = "Deseja realmente excluir este lançamento de produção?";
-            }
-
-            if(confirm(msg)) {
-                try {
-                    await deleteDoc(doc(db, "lancamentos_producao", ultimoId));
-                    alert("Lançamento excluído/corrigido com sucesso.");
-                } catch(e) {
-                    alert("Erro ao excluir: " + e.message);
-                }
-            }
-        }
 
         window.saveItemStatusToCloud = async function(itemId, isChecked, isSilent = false) {
             const docId = itemId.replace(/\//g, '_'); 
@@ -327,98 +138,6 @@
             btn.disabled = false;
             alert(`Sincronização: ${successCount} itens.`);
         }
-
-        const FATORES_M3 = {
-            "PAINEL RIPADO BRANCO - 5 ¹/4 X 8'": 1.63881,
-            "PAINEL RIPADO PRETO - 5 ¹/4 X 8'": 1.63881,
-            "PAINEL RIPADO IMPRESSO - 5 ¹/4 X 8'": 1.63881,
-            "L S4S 1 ¹/2 X 8'": 1.72465,
-            "L S4S 5 ¹/2 X 8'": 1.70254,
-            "L S4S 3 ¹/2 X 8'": 1.85732,
-            "L S4S 5 ¹/2 X 12'": 1.82415
-        };
-
-        window.abrirModalProducao = function() {
-            if (!window.isAdmin) {
-                alert("ACESSO RESTRITO: É necessário senha de administrador para lançar produção.");
-                window.toggleAdmin(); 
-                return;
-            }
-
-            document.getElementById('prod-modal-overlay').style.display = 'block';
-            document.getElementById('prod-modal-container').style.display = 'flex';
-            document.getElementById('prod-data').valueAsDate = new Date();
-            const select = document.getElementById('prod-select');
-            if(select.options.length <= 1) {
-                Object.keys(FATORES_M3).forEach(nome => {
-                    let opt = document.createElement('option');
-                    opt.value = nome;
-                    opt.innerHTML = nome;
-                    select.appendChild(opt);
-                });
-            }
-        };
-
-        window.fecharModalProducao = function() {
-            document.getElementById('prod-modal-overlay').style.display = 'none';
-            document.getElementById('prod-modal-container').style.display = 'none';
-            document.getElementById('prod-qtd').value = '';
-            document.getElementById('prod-m3').value = '';
-            document.getElementById('prod-select').selectedIndex = 0;
-        };
-
-        window.calcularVolumeProducao = function() {
-            const produto = document.getElementById('prod-select').value;
-            const qtd = parseFloat(document.getElementById('prod-qtd').value) || 0;
-            const m3Input = document.getElementById('prod-m3');
-            if(produto && FATORES_M3[produto]) {
-                const resultado = (qtd * FATORES_M3[produto]).toFixed(5);
-                m3Input.value = resultado + " m³";
-            } else {
-                m3Input.value = "0.00000 m³";
-            }
-        };
-
-        window.salvarProducao = async function() {
-            if (!window.isAdmin) return;
-
-            const data = document.getElementById('prod-data').value;
-            const produto = document.getElementById('prod-select').value;
-            const qtd = document.getElementById('prod-qtd').value;
-            const m3 = document.getElementById('prod-m3').value; 
-
-            if(!produto || !qtd || qtd <= 0) {
-                alert("Preencha corretamente.");
-                return;
-            }
-
-            const btn = document.getElementById('btn-salvar-producao');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = "Salvando...";
-
-            try {
-                let m3Clean = parseFloat(m3.replace(' m³', '')) || 0;
-
-                await addDoc(collection(db, "lancamentos_producao"), {
-                    data: data,
-                    produto: produto,
-                    quantidade_pacotes: parseFloat(qtd),
-                    volume_m3: m3Clean,
-                    timestamp: new Date().toISOString(),
-                    usuario: "admin_pcp"
-                });
-                
-                alert("Produção Salva!");
-                window.fecharModalProducao();
-            } catch (e) {
-                console.error("Erro prod:", e);
-                alert("Erro ao salvar: " + e.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
-        };
 
     </script>
 
@@ -467,9 +186,6 @@
 
         #detail-table th { font-size: 1.8rem; } 
         #detail-table td { font-size: 1.8rem; } 
-
-        #history-table th { font-size: 1.2rem; } 
-        #history-table td { font-size: 1.10rem; } 
         
         input[type="checkbox"] { transform: scale(1.6); cursor: pointer; } 
         .completed-row td input[type="checkbox"] { opacity: 0.7; } 
@@ -493,10 +209,6 @@
         .btn-filter { background-color: var(--bg-secondary); color: var(--accent-primary1); padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 1.1rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s; border: 1px solid var(--border-color); margin-right: 0.5rem; }
         .btn-filter:hover { background-color: var(--accent-secondary); color: var(--bg-primary); border-color: var(--accent-secondary); }
         
-        .btn-active { background-color: var(--highlight-green); color: white; border-color: var(--highlight-green); }
-        .btn-inactive { background-color: var(--bg-secondary); color: var(--text-secondary); border-color: var(--border-color); }
-        .btn-inactive:hover { background-color: #21262D; color: var(--text-primary); }
-
         .po-select-list { background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); width: 100%; border-radius: 6px; padding: 0.5rem; height: 12rem; overflow-y: auto; -webkit-tap-highlight-color: transparent; }
         .po-select-list option { padding: 0.6rem 0.5rem; font-size: 1.25rem; white-space: nowrap; color: var(--text-primary); background-color: var(--bg-secondary); cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .po-select-list option:checked, .po-select-list option:hover:checked { background-color: var(--accent-secondary); color: var(--bg-primary); font-weight: bold; }
@@ -545,7 +257,6 @@
         .mode-mobile th, .mode-mobile td { font-size: 0.85rem !important; padding: 0.4rem 0.5rem !important; }
         .mode-mobile #dashboard-table th, .mode-mobile #dashboard-table td { font-size: 0.85rem !important; } 
         .mode-mobile #detail-table th, .mode-mobile #detail-table td { font-size: 0.85rem !important; }
-        .mode-mobile #history-table th, .mode-mobile #history-table td { font-size: 0.85rem !important; }
         .mode-mobile input[type="checkbox"] { transform: scale(1.1) !important; }
         .mode-mobile .metric-label { font-size: 0.8rem !important; }
         .mode-mobile .metric-value { font-size: 1.8rem !important; }
@@ -591,10 +302,6 @@
 
         <button id="reload-button" class="btn w-full mb-4">Recarregar Dados</button>
 
-        <button onclick="window.abrirModalProducao()" class="btn w-full mb-4 bg-gray-700 hover:bg-gray-600 text-white">
-            <i class=></i> Lançar Produção
-        </button>
-
         <a href="https://app.powerbi.com/links/B8TF3aTy_D?ctid=00efaec3-2fdf-400e-ab1c-0a8efb39d281&pbi_source=linkShare" 
            class="btn-filter flex items-center w-full justify-center text-center py-3 mb-4" 
            target="_blank">
@@ -637,7 +344,6 @@
     <main class="w-full xl:flex-1 flex flex-col min-w-0 gap-4">
         
         <div class="flex flex-col xl:flex-row gap-4 items-stretch">
-            
             <div class="flex-1 flex flex-col gap-4 min-w-0">
                 <div class="card !mb-0 flex flex-row justify-between items-center py-4">
                      <div>
@@ -671,47 +377,9 @@
                     </div>
                 </div>
             </div>
+        </div> 
 
-            <aside class="w-full xl:w-[450px] card flex flex-col flex-shrink-0 !mb-0">
-                <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">
-                    <i class="fas fa-history mr-2"></i> Histórico de Produção
-                </h2>
-                
-                <div class="flex gap-2 mb-4">
-                    <button id="btn-filter-today" onclick="window.setFilterMode('today')" class="btn-filter w-1/2 text-center justify-center btn-active text-lg py-2">Hoje</button>
-                    <button id="btn-filter-month" onclick="window.setFilterMode('month')" class="btn-filter w-1/2 text-center justify-center btn-inactive text-lg py-2">Mês Atual</button>
-                </div>
-
-                <div class="overflow-y-auto flex-grow mb-4 border border-white/10 rounded-md" style="min-height: 200px;">
-                    <table id="history-table" class="w-full">
-                        <thead class="bg-[#21262D] text-white sticky top-0">
-                            <tr>
-                                <th class="p-2 text-left font-bold">Data</th>
-                                <th class="p-2 text-left font-bold">Prod.</th>
-                                <th class="p-2 text-center font-bold">Pcts</th>
-                                <th class="p-2 text-right font-bold">M³</th>
-                                <th class="p-2 text-center font-bold"><i class="fas fa-trash"></i></th>
-                            </tr>
-                        </thead>
-                        <tbody id="producao-table-body">
-                            <tr><td colspan="5" class="text-center text-gray-400 py-6">Carregando...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="mt-auto border-t border-gray-700 pt-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-base text-gray-400 font-bold mode-mobile-text">Total Pacotes:</span>
-                        <span id="total-hist-pcts" class="text-2xl font-bold text-white">0</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-base text-gray-400 font-bold mode-mobile-text">Total Volume:</span>
-                        <span id="total-hist-m3" class="text-2xl font-bold text-green-400">0.000 m³</span>
-                    </div>
-                </div>
-            </aside>
-
-        </div> <div class="card flex flex-col flex-grow !mb-0">
+        <div class="card flex flex-col flex-grow !mb-0">
             <h2 class="text-3xl font-semibold mb-4">MPS - Plano Mestre de Produção</h2>
             <div class="table-container">
                 <table id="dashboard-table">
@@ -733,7 +401,6 @@
                     </tbody>
                 </table>
             </div>
-            <p id="dashboard-subitems-legend" class="text-sm text-gray-400 mt-3 italic hidden">* Valores das sub-linhas são baseados integralmente na demanda da carteira, pois a base de estoque atual não detalha largura e comprimento.</p>
             <div class="mt-4 flex justify-end">
                 <button id="btn-global-mrp-pdf" class="btn btn-global-export">
                     <i class="fas fa-file-pdf mr-2 text-2xl"></i> Exportar Lista (PDF)
@@ -780,38 +447,6 @@
             <button id="export-mrp-pdf" class="btn btn-secondary text-xl">
                 Exportar PDF 
             </button>
-        </div>
-    </div>
-    
-    <div id="prod-modal-overlay" class="modal-overlay"></div>
-    <div id="prod-modal-container" class="modal-container" style="max-width: 500px;">
-        <div class="modal-header">
-            <h3 class="modal-title">Lançamento de Produção</h3>
-            <span class="modal-close-btn" onclick="window.fecharModalProducao()">&times;</span>
-        </div>
-        <div class="modal-content flex flex-col gap-4">
-            <div>
-                <label class="text-base text-gray-400 font-bold uppercase mb-1 block mode-mobile-text">Data</label>
-                <input type="date" id="prod-data" class="input-dark">
-            </div>
-            <div>
-                <label class="text-base text-gray-400 font-bold uppercase mb-1 block mode-mobile-text">Produto</label>
-                <select id="prod-select" onchange="window.calcularVolumeProducao()" class="input-dark">
-                    <option value="" disabled selected>Selecione...</option>
-                </select>
-            </div>
-            <div>
-                <label class="text-base text-gray-400 font-bold uppercase mb-1 block mode-mobile-text">Quantidade (Pacotes)</label>
-                <input type="number" id="prod-qtd" placeholder="Ex: 10" oninput="window.calcularVolumeProducao()" class="input-dark">
-            </div>
-            <div>
-                <label class="text-base text-gray-400 font-bold uppercase mb-1 block mode-mobile-text">Volume Total (m³)</label>
-                <input type="text" id="prod-m3" readonly placeholder="0.00000 m³" class="input-dark bg-black/30 font-bold text-green-400">
-            </div>
-        </div>
-        <div class="modal-footer flex gap-3">
-            <button onclick="window.fecharModalProducao()" class="btn btn-secondary text-xl">Cancelar</button>
-            <button id="btn-salvar-producao" onclick="window.salvarProducao()" class="btn text-xl" style="background-color: #238636; color: white;">Salvar</button>
         </div>
     </div>
 
@@ -870,7 +505,6 @@
                     if (simpleHash(senha) === 110813) {
                         window.isAdmin = true;
                         updateAdminUI();
-                        window.filtrarProducao(); 
                     } else {
                         alert("Senha incorreta.");
                     }
@@ -957,10 +591,9 @@
         function calcularDashboard(filteredItems, adjustedStockItems) {
             const dashboardMap = {};
 
-            // 1. Processa Carteira (Agrupando PAI e FILHO)
+            // 1. Processa Carteira
             filteredItems.forEach(item => {
                 const mainKey = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
-                // Formata dimensão de forma bonita, ex: 38.1mm x 2.44m
                 const dimName = item.Largura ? `${(item.Largura * 1000).toFixed(1)}mm x ${(item.Comprimento || 0).toFixed(2)}m` : 'Padrão';
 
                 if (!dashboardMap[mainKey]) {
@@ -1020,7 +653,7 @@
                 dashboardMap[mainKey].Pecas_Estoque += estPecas;
                 dashboardMap[mainKey].M3_Estoque_Liquido += estM3;
 
-                // Se o estoque TIVER dimensão explícita, joga pro Sub-item também.
+                // Se o estoque tiver dimensão explícita, joga pro Sub-item também.
                 if (item.Largura) {
                     if (!dashboardMap[mainKey].subItems[dimName]) {
                         dashboardMap[mainKey].subItems[dimName] = {
@@ -1073,8 +706,7 @@
                         Pacotes_Estoque: parent.Pacotes_Estoque_Round,
                         M3_A_Produzir: parent.M3_A_Produzir,
                         Pacotes_A_Produzir: parent.Pacotes_A_Produzir,
-                        // Só anexa sub-itens se houver variações reais dimensionais
-                        SubItems: subItemsArray.length > 0 && subItemsArray.some(s => s.Nome !== 'Padrão') ? subItemsArray : []
+                        SubItems: subItemsArray
                     });
                 }
             });
@@ -1110,7 +742,6 @@
             document.getElementById('metric-m3').textContent = formatM3(summary.totalM3); 
         }
         
-        // --- FUNÇÃO GLOBAL DE TOGGLE DO ACORDEÃO ---
         window.toggleSubRows = function(parentId) {
             const rows = document.querySelectorAll(`.sub-row-${parentId}`);
             const btn = document.getElementById(`btn-${parentId}`);
@@ -1132,33 +763,42 @@
             }
         }
 
-        // --- RENDERIZAÇÃO DO DASHBOARD COM SUB-LINHAS ---
+        // --- RENDERIZAÇÃO DO DASHBOARD COM REGRA DE 2 OU MAIS MEDIDAS ---
         function renderDashboard(dashboardData) {
             const tbody = document.getElementById('dashboard-table').querySelector('tbody'); 
-            const legend = document.getElementById('dashboard-subitems-legend');
             tbody.innerHTML = ''; 
             
             if (dashboardData.length === 0) { 
                 tbody.innerHTML = `<tr><td colspan="9" class="text-center text-gray-500 py-6">Nenhum dado para exibir.</td></tr>`; 
-                legend.classList.add('hidden');
                 return; 
             }
 
-            let showLegend = false;
-
             dashboardData.forEach((item, index) => {
                 const parentId = `row-${index}`;
-                const hasSubItems = item.SubItems && item.SubItems.length > 0;
+                // LÓGICA CHAVE: Só considera "múltiplas medidas" se tiver mais de 1 variação diferente (exclui quando é só Padrão ou só 1 medida específica)
+                const hasMultipleDimensions = item.SubItems && item.SubItems.length > 1;
 
                 const am3 = item.M3_A_Produzir || 0;
                 const apct = item.Pacotes_A_Produzir || 0;
-                const cm3 = am3 > 0.001 ? 'highlight-red' : '';
-                const cpct = apct > 0 ? 'highlight-red' : '';
-                const pm3 = cm3 ? ' pulse-red' : '';
-                const ppct = cpct ? ' pulse-red' : '';
+                
+                let am3Display = '';
+                let apctDisplay = '';
+                let cm3 = '', cpct = '', pm3 = '', ppct = '';
+
+                if (hasMultipleDimensions) {
+                    am3Display = '';
+                    apctDisplay = '';
+                } else {
+                    am3Display = formatM3(am3);
+                    apctDisplay = formatPct(apct);
+                    cm3 = am3 > 0.001 ? 'highlight-red' : '';
+                    cpct = apct > 0 ? 'highlight-red' : '';
+                    pm3 = cm3 ? ' pulse-red' : '';
+                    ppct = cpct ? ' pulse-red' : '';
+                }
                 
                 let expandIcon = '';
-                if (hasSubItems) {
+                if (hasMultipleDimensions) {
                     expandIcon = `<button onclick="event.stopPropagation(); window.toggleSubRows('${parentId}')" class="text-accent-primary1 hover:text-white transition transform text-xl w-6 h-6 flex items-center justify-center rounded bg-white/5 border border-white/10" id="btn-${parentId}">+</button>`;
                 }
 
@@ -1168,7 +808,7 @@
                 }
 
                 const row = document.createElement('tr');
-                if(hasSubItems) {
+                if(hasMultipleDimensions) {
                     row.className = 'cursor-pointer hover:bg-white/5 transition';
                     row.onclick = () => window.toggleSubRows(parentId);
                 }
@@ -1181,14 +821,13 @@
                     <td>${formatM3(item.M3_Estoque_Liquido)}</td>
                     <td>${formatPct(item.Pacotes_Carteira)}</td> 
                     <td>${formatPct(item.Pacotes_Estoque)}</td>
-                    <td class="${cm3}${pm3}">${formatM3(am3)}</td>
-                    <td class="${cpct}${ppct}">${formatPct(apct)}</td>
+                    <td class="${cm3}${pm3}">${am3Display}</td>
+                    <td class="${cpct}${ppct}">${apctDisplay}</td>
                 `;
                 tbody.appendChild(row);
 
-                // Renderiza Sub-Linhas
-                if (hasSubItems) {
-                    showLegend = true;
+                // Renderiza Sub-Linhas APENAS SE houver múltiplas dimensões
+                if (hasMultipleDimensions) {
                     item.SubItems.forEach(sub => {
                         const subRow = document.createElement('tr');
                         subRow.className = `sub-row-${parentId} hidden bg-[#161B22] border-l-4 border-l-[#983A1E] text-sm opacity-90`;
@@ -1196,8 +835,6 @@
                         const subAm3 = sub.M3_A_Produzir || 0;
                         const subApct = sub.Pacotes_A_Produzir || 0;
                         
-                        // Como a base atual de estoque não tem detalhamento de largura, ele será zero. Mostramos o indicativo (*)
-                        const hasStock = sub.M3_Estoque_Liquido > 0;
                         const s_cm3 = subAm3 > 0.001 ? 'text-red-400 font-bold' : 'text-gray-500';
                         const s_cpct = subApct > 0 ? 'text-red-400 font-bold' : 'text-gray-500';
 
@@ -1205,22 +842,16 @@
                             <td class="text-right text-gray-500 pr-4">↳</td>
                             <td colspan="2" class="text-gray-300 font-mono text-base"><i class="fas fa-ruler-combined mr-2 text-gray-500"></i>${sub.Nome}</td>
                             <td class="text-gray-400">${formatM3(sub.M3_Carteira_Volume)}</td>
-                            <td class="text-gray-500">${hasStock ? formatM3(sub.M3_Estoque_Liquido) : '-'}</td>
+                            <td class="text-gray-500">${formatM3(sub.M3_Estoque_Liquido)}</td>
                             <td class="text-gray-400">${formatPct(sub.Pacotes_Carteira)}</td>
-                            <td class="text-gray-500">${sub.Pacotes_Estoque > 0 ? formatPct(sub.Pacotes_Estoque) : '-'}</td>
-                            <td class="${s_cm3}">${hasStock ? formatM3(subAm3) : formatM3(sub.M3_Carteira_Volume) + ' *'}</td>
-                            <td class="${s_cpct}">${sub.Pacotes_Estoque > 0 ? formatPct(subApct) : formatPct(sub.Pacotes_Carteira) + ' *'}</td>
+                            <td class="text-gray-500">${formatPct(sub.Pacotes_Estoque)}</td>
+                            <td class="${s_cm3}">${formatM3(subAm3)}</td>
+                            <td class="${s_cpct}">${formatPct(subApct)}</td>
                         `;
                         tbody.appendChild(subRow);
                     });
                 }
             });
-
-            if(showLegend) {
-                legend.classList.remove('hidden');
-            } else {
-                legend.classList.add('hidden');
-            }
         }
 
         function renderDetailTable(filteredItems) {
