@@ -2,30 +2,72 @@ const MOCK_ESTOQUE_LIQUIDO = [
   {
     "Produto": "MOLDURAS",
     "Perfil": "BRANCO",
+    "Espessura": 0.0,
+    "Largura": 0.0,
+    "Comprimento": 0.0,
     "M3_Estoque_Liquido": 1406.612,
     "Pecas_Estoque_Liquido": 0.0
   },
   {
     "Produto": "MOLDURAS",
     "Perfil": "LS4S",
-    "M3_Estoque_Liquido": 26.00244606688,
+    "Espessura": 0.017,
+    "Largura": 0.0889,
+    "Comprimento": 2.4384,
+    "M3_Estoque_Liquido": 26.0024461,
     "Pecas_Estoque_Liquido": 7056.0
+  },
+  {
+    "Produto": "MOLDURAS",
+    "Perfil": "LS4S",
+    "Espessura": 0.017,
+    "Largura": 0.1397,
+    "Comprimento": 2.4384,
+    "M3_Estoque_Liquido": -3.312000007582583e-08,
+    "Pecas_Estoque_Liquido": 0.0
   },
   {
     "Produto": "PAINEL RIPADO",
     "Perfil": "BRANCO",
-    "M3_Estoque_Liquido": 59.43026050048,
-    "Pecas_Estoque_Liquido": 16281.0
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 1.2192,
+    "M3_Estoque_Liquido": 4.097024,
+    "Pecas_Estoque_Liquido": 2100.0
+  },
+  {
+    "Produto": "PAINEL RIPADO",
+    "Perfil": "BRANCO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "M3_Estoque_Liquido": 55.33323650048,
+    "Pecas_Estoque_Liquido": 14181.0
   },
   {
     "Produto": "PAINEL RIPADO",
     "Perfil": "IMPRESSO",
-    "M3_Estoque_Liquido": 4.916429959200002,
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 1.2,
+    "M3_Estoque_Liquido": 4.000000000062981e-08,
+    "Pecas_Estoque_Liquido": 0.0
+  },
+  {
+    "Produto": "PAINEL RIPADO",
+    "Perfil": "IMPRESSO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
+    "M3_Estoque_Liquido": 4.9164299191999135,
     "Pecas_Estoque_Liquido": 1260.0
   },
   {
     "Produto": "PAINEL RIPADO",
     "Perfil": "PRETO",
+    "Espessura": 0.012,
+    "Largura": 0.13335,
+    "Comprimento": 2.4384,
     "M3_Estoque_Liquido": 11.471667937599932,
     "Pecas_Estoque_Liquido": 2940.0
   }
