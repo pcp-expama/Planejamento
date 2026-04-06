@@ -8,8 +8,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
   {
     "Produto": "MOLDURAS",
     "Perfil": "LS4S",
-    "M3_Estoque_Liquido": -3.312000007582583e-08,
-    "Pecas_Estoque_Liquido": 0.0
+    "M3_Estoque_Liquido": 26.00244606688,
+    "Pecas_Estoque_Liquido": 7056.0
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -2349,8 +2349,8 @@ const DADOS_BOM = [
     "Largura": 0.0889,
     "Comprimento": 2.4384,
     "Componente": "VERNIZ UV FOSCO PINTURA",
-    "Consumo_M3": 1.72378,
-    "Consumo_Peca": 0.00633742,
+    "Consumo_M3": 0.368,
+    "Consumo_Peca": 0.001356,
     "Unidade_Medida": "L",
     "Tipo_Insumo": "TINTAS IMPRESSORA"
   },
