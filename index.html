@@ -144,7 +144,6 @@
 
         // --- FUNÇÃO DE FILTRO ATUALIZADA ---
         window.filtrarProducao = function() {
-            // Obter data local correta (YYYY-MM-DD)
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -158,7 +157,6 @@
                 dtInicio = hojeStr;
                 dtFim = hojeStr;
             } else {
-                // Mês Atual
                 dtInicio = inicioMesStr;
                 dtFim = hojeStr; 
             }
@@ -192,7 +190,7 @@
                         produto: item.produto,
                         quantidade_pacotes: 0,
                         volume_m3: 0,
-                        ids_originais: [] // Lista de IDs para permitir exclusão
+                        ids_originais: [] 
                     };
                 }
 
@@ -204,11 +202,10 @@
                 }
                 mapa[chave].volume_m3 += vol;
                 
-                // Guarda o ID e timestamp para saber qual apagar
                 mapa[chave].ids_originais.push({ id: item.id, timestamp: item.timestamp });
             });
 
-            return Object.values(mapa).sort((a,b) => b.data.localeCompare(a.data)); // Ordenar por data decrescente
+            return Object.values(mapa).sort((a,b) => b.data.localeCompare(a.data)); 
         }
 
         function renderizarTabelaProducao(dadosAgrupados) {
@@ -218,7 +215,6 @@
             let totalPcts = 0;
             let totalM3 = 0;
             
-            // Data de hoje local para verificar permissão de exclusão
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -234,7 +230,6 @@
 
                     const dataFormatada = item.data ? item.data.split('-').reverse().slice(0,2).join('/') : '--/--';
                     
-                    // --- TRAVA DE SEGURANÇA VISUAL ---
                     const isToday = item.data === hojeIso;
                     const canDelete = isToday && window.isAdmin; 
                     
@@ -259,21 +254,16 @@
             document.getElementById('total-hist-m3').textContent = totalM3.toFixed(3) + ' m³';
         }
 
-        // --- LÓGICA DE EXCLUSÃO (APAGAR APENAS O ÚLTIMO LANÇAMENTO) ---
         window.tentarExcluirLancamento = async function(listaIds) {
-            // TRAVA DE SEGURANÇA 1
             if (!window.isAdmin) {
                 alert("ACESSO NEGADO: Apenas administradores podem excluir registros.");
                 return;
             }
-
             if(!listaIds || listaIds.length === 0) return;
 
-            // Ordena pelo timestamp decrescente (o mais novo primeiro)
             listaIds.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
             const qtd = listaIds.length;
-            const ultimoId = listaIds[0].id; // Pega o ID do mais recente
+            const ultimoId = listaIds[0].id;
 
             let msg = "";
             if(qtd > 1) {
@@ -292,7 +282,6 @@
             }
         }
 
-        // Função de Salvamento (Unitário - Checkbox)
         window.saveItemStatusToCloud = async function(itemId, isChecked, isSilent = false) {
             const docId = itemId.replace(/\//g, '_'); 
             const docRef = doc(db, dbCollectionPath, docId);
@@ -319,7 +308,6 @@
             }
         }
 
-        // Função de Salvamento Manual
         window.forceManualSync = async function() {
             if(!window.isAdmin) return;
             if(!confirm("Reenviar status para nuvem?")) return;
@@ -340,7 +328,6 @@
             alert(`Sincronização: ${successCount} itens.`);
         }
 
-        // --- LÓGICA DE PRODUÇÃO (MODAL) ---
         const FATORES_M3 = {
             "PAINEL RIPADO BRANCO - 5 ¹/4 X 8'": 1.63881,
             "PAINEL RIPADO PRETO - 5 ¹/4 X 8'": 1.63881,
@@ -351,11 +338,10 @@
             "L S4S 5 ¹/2 X 12'": 1.82415
         };
 
-        // --- TRAVA DE SEGURANÇA 2: LANÇAMENTO ---
         window.abrirModalProducao = function() {
             if (!window.isAdmin) {
                 alert("ACESSO RESTRITO: É necessário senha de administrador para lançar produção.");
-                window.toggleAdmin(); // Chama a função de login
+                window.toggleAdmin(); 
                 return;
             }
 
@@ -394,7 +380,7 @@
         };
 
         window.salvarProducao = async function() {
-            if (!window.isAdmin) return; // Segurança extra
+            if (!window.isAdmin) return;
 
             const data = document.getElementById('prod-data').value;
             const produto = document.getElementById('prod-select').value;
@@ -468,34 +454,23 @@
         
         table { width: 100%; border-collapse: collapse; border-spacing: 0; margin-top: 1rem; border: 1px solid var(--border-color); }
         
-        /* OTIMIZAÇÃO GERAL DE TABELAS */
         th, td { border: 1px solid var(--border-color); padding: 0.8rem 0.5rem; text-align: left; white-space: nowrap; }
         th { background-color: #21262D; color: #FFF; font-weight: 700; position: sticky; top: 0; z-index: 10; font-size: 1.25rem; }
         td { font-size: 1.35rem; } 
         
-        tbody tr:nth-child(even):not(.completed-row) { background-color: rgba(22, 27, 34, 0.5); }
-        tbody tr:hover:not(.completed-row) { background-color: #21262D; }
+        tbody tr:nth-child(even):not(.completed-row):not([class*="sub-row"]) { background-color: rgba(22, 27, 34, 0.5); }
+        tbody tr:hover:not(.completed-row):not([class*="sub-row"]) { background-color: #21262D; }
         .completed-row td { background-color: var(--completed-bg) !important; color: var(--completed-text); text-decoration: line-through; }
 
-        /* =========================================
-           AJUSTES ESPECÍFICOS: TABELA MPS
-           ========================================= */
         #dashboard-table th { font-size: 1.8rem; } 
         #dashboard-table td { font-size: 1.9rem; } 
 
-        /* =========================================
-           AJUSTES ESPECÍFICOS: TABELA DE ITENS EM CARTEIRA
-           ========================================= */
         #detail-table th { font-size: 1.8rem; } 
         #detail-table td { font-size: 1.8rem; } 
 
-        /* =========================================
-           AJUSTES ESPECÍFICOS: TABELA HISTÓRICO DE PRODUÇÃO
-           ========================================= */
         #history-table th { font-size: 1.2rem; } 
         #history-table td { font-size: 1.10rem; } 
         
-        /* Checkbox */
         input[type="checkbox"] { transform: scale(1.6); cursor: pointer; } 
         .completed-row td input[type="checkbox"] { opacity: 0.7; } 
         input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.3; filter: grayscale(100%); }
@@ -541,7 +516,6 @@
         @keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
         #completed-po-scroller:hover #scroller-content { animation-play-state: paused; }
         
-        /* MODAL */
         .modal-overlay { display: none; position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.7); z-index: 40; transition: opacity 0.2s ease-in-out; backdrop-filter: blur(2px); }
         .modal-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; z-index: 50; width: 90%; max-width: 50rem; max-height: 90vh; display: none; flex-direction: column; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); }
@@ -553,8 +527,8 @@
         .mrp-table-modal { width: 100%; border-collapse: collapse; margin: 0; border: none; }
         .mrp-table-modal th, .mrp-table-modal td { border: 1px solid var(--border-color); padding: 0.8rem 1rem; white-space: normal; font-size: 1.3rem; }
         .mrp-table-modal th { background-color: #2c313a; }
-        .mrp-toggle-icon { cursor: pointer; font-weight: bold; font-size: 1.8rem; color: var(--accent-primary1); user-select: none; display: inline-block; width: 30px; text-align: center; }
-        .mrp-toggle-icon:hover { color: var(--accent-secondary); }
+        .mrp-toggle-icon { cursor: pointer; color: var(--accent-primary1); user-select: none; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; background: rgba(255,255,255,0.05); border-radius: 4px; transition: all 0.2s; }
+        .mrp-toggle-icon:hover { color: #FFF; background: var(--highlight-green); }
         
         .admin-status { font-size: 1.1rem; padding: 0.5rem 0.5rem; border-radius: 4px; margin-bottom: 1rem; text-align: center; border: 1px solid transparent; cursor: pointer; }
         .admin-locked { border-color: #30363D; color: #8B949E; background-color: #161B22; }
@@ -563,9 +537,6 @@
         .input-dark { background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.85rem; border-radius: 4px; width: 100%; font-size: 1.3rem; }
         .input-dark:focus { outline: none; border-color: var(--accent-primary); }
 
-        /* =========================================
-           AJUSTES PARA MODO CELULAR (OVERRIDE)
-           ========================================= */
         body.mode-mobile { font-size: 0.9rem !important; }
         .mode-mobile h1 { font-size: 1.4rem !important; margin-bottom: 0.2rem !important; }
         .mode-mobile h2 { font-size: 1.1rem !important; margin-bottom: 0.5rem !important; }
@@ -589,7 +560,7 @@
         .mode-mobile .mrp-table-modal th, .mode-mobile .mrp-table-modal td { font-size: 0.85rem !important; padding: 0.5rem !important; }
         .mode-mobile .input-dark { font-size: 0.9rem !important; padding: 0.5rem !important; }
         .mode-mobile .admin-status { font-size: 0.85rem !important; padding: 0.3rem !important; }
-        .mode-mobile .mrp-toggle-icon { font-size: 1.2rem !important; }
+        .mode-mobile .mrp-toggle-icon { font-size: 1.2rem !important; width: 25px; height: 25px; }
         .mode-mobile span.text-2xl { font-size: 1rem !important; } 
         .mode-mobile .mode-mobile-text { font-size: 0.8rem !important; }
     </style>
@@ -746,7 +717,7 @@
                 <table id="dashboard-table">
                     <thead>
                         <tr>
-                            <th style="width: 20px;">MRP</th> 
+                            <th style="width: 80px;" class="text-center">Ações</th> 
                             <th>Produto</th>
                             <th>Perfil</th>
                             <th>M³ Carteira</th>
@@ -762,6 +733,7 @@
                     </tbody>
                 </table>
             </div>
+            <p id="dashboard-subitems-legend" class="text-sm text-gray-400 mt-3 italic hidden">* Valores das sub-linhas são baseados integralmente na demanda da carteira, pois a base de estoque atual não detalha largura e comprimento.</p>
             <div class="mt-4 flex justify-end">
                 <button id="btn-global-mrp-pdf" class="btn btn-global-export">
                     <i class="fas fa-file-pdf mr-2 text-2xl"></i> Exportar Lista (PDF)
@@ -846,9 +818,6 @@
     <script id="script-dados" src=""></script>
 
     <script> 
-        // Aqui incluímos todas as funções que precisam ser chamadas pelo HTML diretamente no objeto 'window'
-        // garantindo que não sofram com o escopo fechado do módulo Firebase
-
         const CAMINHO_JS = "dados_atuais.js";
         
         // --- DADOS DE FALLBACK ---
@@ -890,7 +859,6 @@
             return hash;
         }
 
-        // Função tornada global para ser acessada pelo onclick do HTML
         window.toggleAdmin = function() {
             if (window.isAdmin) {
                 window.isAdmin = false;
@@ -942,9 +910,8 @@
             return formatNumber(num, 0) + ' POs';
         }
 
-        // --- LÓGICA CIRÚRGICA: Função atualizada para validar Dimensões exatas ---
+        // --- LÓGICA CIRÚRGICA DE PACOTES ---
         function getPecasPorPacote(item) {
-            // Mantém a compatibilidade se o sistema passar apenas o nome do perfil
             if (typeof item === 'string') return item === 'LS4S' ? 294 : 420;
 
             const produto = (item.Produto || '').toUpperCase();
@@ -952,12 +919,10 @@
             const largura = parseFloat(item.Largura) || 0;
             const comprimento = parseFloat(item.Comprimento) || 0;
 
-            // Regra do Painel Ripado (continua padrão de fábrica)
             if (produto.includes('PAINEL RIPADO')) {
                 return 420;
             }
 
-            // Novas regras das Molduras baseadas na Largura (e Comprimento se necessário)
             if (largura > 0) {
                 if (Math.abs(largura - 0.0381) < 0.0001) {
                     return 1092;
@@ -971,8 +936,6 @@
                     }
                 }
             }
-
-            // Fallback de segurança para Estoque (onde o banco não detalha a largura)
             return perfil === 'LS4S' ? 294 : 420;
         }
         
@@ -984,73 +947,142 @@
                 const pendentePecas = item.Pendente_Pecas || 0;
                 totalM3 += item.Pendente_M3 || 0;
                 if (pendentePecas > 0) {
-                    // Cirúrgico: Substituído item.Perfil por item
                     totalPacotes += Math.round(pendentePecas / getPecasPorPacote(item));
                 }
             });
             return { totalPOs, totalPacotes, totalM3 };
         }
         
+        // --- FUNÇÃO DE CÁLCULO E AGRUPAMENTO ATUALIZADA COM SUB-ITENS ---
         function calcularDashboard(filteredItems, adjustedStockItems) {
-            // Cirúrgico: Calcula os pacotes EXATOS antes de agrupar as larguras na tela
-            const carteiraAgrupada = filteredItems.reduce((acc, item) => {
-                const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
-                if (!acc[key]) acc[key] = { Produto: item.Produto, Perfil: item.Perfil, Solicitado_Pecas: 0, Solicitado_M3: 0, Pacotes_Carteira: 0 };
-                
-                acc[key].Solicitado_Pecas += item.Pendente_Pecas || 0; 
-                acc[key].Solicitado_M3 += item.Pendente_M3 || 0; 
-                acc[key].Pacotes_Carteira += (item.Pendente_Pecas || 0) / getPecasPorPacote(item);
-                
-                return acc;
-            }, {});
+            const dashboardMap = {};
 
-            const estoqueMap = adjustedStockItems.reduce((acc, item) => {
-                 const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
-                 acc[key] = { M3_Estoque_Liquido: item.M3_Estoque_Liquido || 0, Pecas_Estoque_Liquido: item.Pecas_Estoque_Liquido || 0 }; 
-                 return acc;
-            }, {});
+            // 1. Processa Carteira (Agrupando PAI e FILHO)
+            filteredItems.forEach(item => {
+                const mainKey = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
+                // Formata dimensão de forma bonita, ex: 38.1mm x 2.44m
+                const dimName = item.Largura ? `${(item.Largura * 1000).toFixed(1)}mm x ${(item.Comprimento || 0).toFixed(2)}m` : 'Padrão';
 
-            const dashboardData = [];
-            Object.values(carteiraAgrupada).forEach(carteiraItem => {
-                const key = `${carteiraItem.Produto || 'N/A'}|${carteiraItem.Perfil || 'N/A'}`;
-                const estoqueItem = estoqueMap[key] || { M3_Estoque_Liquido: 0, Pecas_Estoque_Liquido: 0 };
-                
-                // Cirúrgico: Fallback de segurança para o estoque baseando-se apenas em Produto e Perfil
-                const fallbackPecasPorPacote = getPecasPorPacote({ Produto: carteiraItem.Produto, Perfil: carteiraItem.Perfil });
-                
-                const m3Carteira = carteiraItem.Solicitado_M3; const pecasCarteira = carteiraItem.Solicitado_Pecas;
-                const m3Estoque = estoqueItem.M3_Estoque_Liquido; const pecasEstoque = estoqueItem.Pecas_Estoque_Liquido;
-                const m3AProduzir = Math.max(0, m3Carteira - m3Estoque); const pecasAProduzir = Math.max(0, pecasCarteira - pecasEstoque);
-                
-                // Cirúrgico: Mantém as regras exatas de arredondamento original (Math.round e Math.floor)
-                const pacotesCarteira = Math.round(carteiraItem.Pacotes_Carteira);
-                const pacotesEstoque = Math.floor(pecasEstoque / fallbackPecasPorPacote);
-                const pacotesAProduzir = Math.max(0, pacotesCarteira - pacotesEstoque);
+                if (!dashboardMap[mainKey]) {
+                    dashboardMap[mainKey] = {
+                        Produto: item.Produto, Perfil: item.Perfil,
+                        M3_Carteira_Volume: 0, M3_Estoque_Liquido: 0,
+                        Pacotes_Carteira: 0, Pacotes_Estoque: 0,
+                        Solicitado_Pecas: 0, Pecas_Estoque: 0,
+                        subItems: {}
+                    };
+                }
 
-                dashboardData.push({
-                    Produto: carteiraItem.Produto, Perfil: carteiraItem.Perfil,
-                    M3_Carteira_Volume: m3Carteira, M3_Estoque_Liquido: m3Estoque,
-                    Pacotes_Carteira: pacotesCarteira, Pacotes_Estoque: pacotesEstoque,
-                    M3_A_Produzir: m3AProduzir, Pacotes_A_Produzir: pacotesAProduzir,
+                if (!dashboardMap[mainKey].subItems[dimName]) {
+                    dashboardMap[mainKey].subItems[dimName] = {
+                        Nome: dimName,
+                        M3_Carteira_Volume: 0, M3_Estoque_Liquido: 0,
+                        Pacotes_Carteira: 0, Pacotes_Estoque: 0,
+                        Solicitado_Pecas: 0, Pecas_Estoque: 0,
+                        ItemRef: item
+                    };
+                }
+
+                const pendPecas = item.Pendente_Pecas || 0;
+                const pendM3 = item.Pendente_M3 || 0;
+                const pacotes = pendPecas > 0 ? (pendPecas / getPecasPorPacote(item)) : 0;
+
+                // Acumula no Pai
+                dashboardMap[mainKey].Solicitado_Pecas += pendPecas;
+                dashboardMap[mainKey].M3_Carteira_Volume += pendM3;
+                dashboardMap[mainKey].Pacotes_Carteira += pacotes;
+
+                // Acumula no Sub-item
+                dashboardMap[mainKey].subItems[dimName].Solicitado_Pecas += pendPecas;
+                dashboardMap[mainKey].subItems[dimName].M3_Carteira_Volume += pendM3;
+                dashboardMap[mainKey].subItems[dimName].Pacotes_Carteira += pacotes;
+            });
+
+            // 2. Processa Estoque
+            adjustedStockItems.forEach(item => {
+                const mainKey = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
+                const dimName = item.Largura ? `${(item.Largura * 1000).toFixed(1)}mm x ${(item.Comprimento || 0).toFixed(2)}m` : 'Padrão';
+
+                if (!dashboardMap[mainKey]) {
+                     dashboardMap[mainKey] = {
+                        Produto: item.Produto, Perfil: item.Perfil,
+                        M3_Carteira_Volume: 0, M3_Estoque_Liquido: 0,
+                        Pacotes_Carteira: 0, Pacotes_Estoque: 0,
+                        Solicitado_Pecas: 0, Pecas_Estoque: 0,
+                        subItems: {}
+                    };
+                }
+
+                const estPecas = item.Pecas_Estoque_Liquido || 0;
+                const estM3 = item.M3_Estoque_Liquido || 0;
+
+                // Acumula no Pai
+                dashboardMap[mainKey].Pecas_Estoque += estPecas;
+                dashboardMap[mainKey].M3_Estoque_Liquido += estM3;
+
+                // Se o estoque TIVER dimensão explícita, joga pro Sub-item também.
+                if (item.Largura) {
+                    if (!dashboardMap[mainKey].subItems[dimName]) {
+                        dashboardMap[mainKey].subItems[dimName] = {
+                            Nome: dimName, M3_Carteira_Volume: 0, M3_Estoque_Liquido: 0,
+                            Pacotes_Carteira: 0, Pacotes_Estoque: 0,
+                            Solicitado_Pecas: 0, Pecas_Estoque: 0, ItemRef: item
+                        };
+                    }
+                    dashboardMap[mainKey].subItems[dimName].Pecas_Estoque += estPecas;
+                    dashboardMap[mainKey].subItems[dimName].M3_Estoque_Liquido += estM3;
+                }
+            });
+
+            // 3. Calcula "A Produzir" para Pais e Filhos
+            const result = [];
+            Object.values(dashboardMap).forEach(parent => {
+                const fallbackPecasPorPacote = getPecasPorPacote({ Produto: parent.Produto, Perfil: parent.Perfil });
+
+                parent.M3_A_Produzir = Math.max(0, parent.M3_Carteira_Volume - parent.M3_Estoque_Liquido);
+                parent.Pacotes_Carteira_Round = Math.round(parent.Pacotes_Carteira);
+                parent.Pacotes_Estoque_Round = Math.floor(parent.Pecas_Estoque / fallbackPecasPorPacote);
+                parent.Pacotes_A_Produzir = Math.max(0, parent.Pacotes_Carteira_Round - parent.Pacotes_Estoque_Round);
+
+                const subItemsArray = Object.values(parent.subItems).map(sub => {
+                     const subPecasPacote = getPecasPorPacote(sub.ItemRef);
+                     const subPacotesCartRound = Math.round(sub.Pacotes_Carteira);
+                     const subPacotesEstRound = Math.floor(sub.Pecas_Estoque / subPecasPacote);
+
+                     const subM3AProduzir = Math.max(0, sub.M3_Carteira_Volume - sub.M3_Estoque_Liquido);
+                     const subPacotesAProduzir = Math.max(0, subPacotesCartRound - subPacotesEstRound);
+
+                     return {
+                         Nome: sub.Nome,
+                         M3_Carteira_Volume: sub.M3_Carteira_Volume,
+                         M3_Estoque_Liquido: sub.M3_Estoque_Liquido,
+                         Pacotes_Carteira: subPacotesCartRound,
+                         Pacotes_Estoque: subPacotesEstRound,
+                         M3_A_Produzir: subM3AProduzir,
+                         Pacotes_A_Produzir: subPacotesAProduzir
+                     };
                 });
+
+                if (parent.M3_Carteira_Volume > 0.001 || parent.M3_Estoque_Liquido > 0.001) {
+                    result.push({
+                        Produto: parent.Produto,
+                        Perfil: parent.Perfil,
+                        M3_Carteira_Volume: parent.M3_Carteira_Volume,
+                        M3_Estoque_Liquido: parent.M3_Estoque_Liquido,
+                        Pacotes_Carteira: parent.Pacotes_Carteira_Round,
+                        Pacotes_Estoque: parent.Pacotes_Estoque_Round,
+                        M3_A_Produzir: parent.M3_A_Produzir,
+                        Pacotes_A_Produzir: parent.Pacotes_A_Produzir,
+                        // Só anexa sub-itens se houver variações reais dimensionais
+                        SubItems: subItemsArray.length > 0 && subItemsArray.some(s => s.Nome !== 'Padrão') ? subItemsArray : []
+                    });
+                }
             });
             
-             adjustedStockItems.forEach(item => {
-                const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
-                 if (!carteiraAgrupada[key] && (item.Pecas_Estoque_Liquido > 0 || item.M3_Estoque_Liquido > 0.001)) {
-                        dashboardData.push({
-                             Produto: item.Produto, Perfil: item.Perfil, M3_Carteira_Volume: 0, M3_Estoque_Liquido: item.M3_Estoque_Liquido,
-                             Pacotes_Carteira: 0, Pacotes_Estoque: Math.floor(item.Pecas_Estoque_Liquido / getPecasPorPacote(item)),
-                             M3_A_Produzir: 0, Pacotes_A_Produzir: 0,
-                        });
-                  }
-            });
+            result.sort((a, b) => { const pc = (a.Produto || '').localeCompare(b.Produto || ''); return pc !== 0 ? pc : (a.Perfil || '').localeCompare(b.Perfil || ''); });
             
-             dashboardData.sort((a, b) => { const pc = (a.Produto || '').localeCompare(b.Produto || ''); return pc !== 0 ? pc : (a.Perfil || '').localeCompare(b.Perfil || ''); });
-            
-            G_DASHBOARD_DATA = dashboardData;
-            
-            return dashboardData.filter(item => item.M3_Carteira_Volume > 0.001 || item.M3_Estoque_Liquido > 0.001);
+            G_DASHBOARD_DATA = result;
+            return result;
         }
 
         function renderPOFilters() {
@@ -1078,26 +1110,73 @@
             document.getElementById('metric-m3').textContent = formatM3(summary.totalM3); 
         }
         
+        // --- FUNÇÃO GLOBAL DE TOGGLE DO ACORDEÃO ---
+        window.toggleSubRows = function(parentId) {
+            const rows = document.querySelectorAll(`.sub-row-${parentId}`);
+            const btn = document.getElementById(`btn-${parentId}`);
+            let isHidden = true;
+
+            rows.forEach(row => {
+                if (row.classList.contains('hidden')) {
+                    row.classList.remove('hidden');
+                    isHidden = false;
+                } else {
+                    row.classList.add('hidden');
+                    isHidden = true;
+                }
+            });
+
+            if (btn) {
+                btn.innerHTML = isHidden ? '+' : '-';
+                btn.classList.toggle('bg-white/20', !isHidden);
+            }
+        }
+
+        // --- RENDERIZAÇÃO DO DASHBOARD COM SUB-LINHAS ---
         function renderDashboard(dashboardData) {
             const tbody = document.getElementById('dashboard-table').querySelector('tbody'); 
+            const legend = document.getElementById('dashboard-subitems-legend');
             tbody.innerHTML = ''; 
-            if (dashboardData.length === 0) { tbody.innerHTML = `<tr><td colspan="9" class="text-center text-gray-500 py-6">Nenhum dado para exibir.</td></tr>`; return; }
-            dashboardData.forEach(item => {
+            
+            if (dashboardData.length === 0) { 
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center text-gray-500 py-6">Nenhum dado para exibir.</td></tr>`; 
+                legend.classList.add('hidden');
+                return; 
+            }
+
+            let showLegend = false;
+
+            dashboardData.forEach((item, index) => {
+                const parentId = `row-${index}`;
+                const hasSubItems = item.SubItems && item.SubItems.length > 0;
+
                 const am3 = item.M3_A_Produzir || 0;
                 const apct = item.Pacotes_A_Produzir || 0;
                 const cm3 = am3 > 0.001 ? 'highlight-red' : '';
                 const cpct = apct > 0 ? 'highlight-red' : '';
                 const pm3 = cm3 ? ' pulse-red' : '';
                 const ppct = cpct ? ' pulse-red' : '';
+                
+                let expandIcon = '';
+                if (hasSubItems) {
+                    expandIcon = `<button onclick="event.stopPropagation(); window.toggleSubRows('${parentId}')" class="text-accent-primary1 hover:text-white transition transform text-xl w-6 h-6 flex items-center justify-center rounded bg-white/5 border border-white/10" id="btn-${parentId}">+</button>`;
+                }
+
                 let toggleIcon = '';
                 if (am3 > 0.001) {
-                    toggleIcon = `<span class="mrp-toggle-icon" onclick="window.showMRPModal('${item.Produto}', '${item.Perfil}')">+</span>`;
+                    toggleIcon = `<span class="mrp-toggle-icon ml-2" title="Ver Insumos (MRP)" onclick="event.stopPropagation(); window.showMRPModal('${item.Produto}', '${item.Perfil}')"><i class="fas fa-boxes"></i></span>`;
                 }
+
                 const row = document.createElement('tr');
+                if(hasSubItems) {
+                    row.className = 'cursor-pointer hover:bg-white/5 transition';
+                    row.onclick = () => window.toggleSubRows(parentId);
+                }
+
                 row.innerHTML = `
-                    <td class="text-center">${toggleIcon}</td>
-                    <td>${item.Produto || 'N/A'}</td>
-                    <td>${item.Perfil || 'N/A'}</td>
+                    <td class="text-center flex justify-center items-center gap-2">${expandIcon} ${toggleIcon}</td>
+                    <td class="font-bold">${item.Produto || 'N/A'}</td>
+                    <td class="font-bold">${item.Perfil || 'N/A'}</td>
                     <td>${formatM3(item.M3_Carteira_Volume)}</td>
                     <td>${formatM3(item.M3_Estoque_Liquido)}</td>
                     <td>${formatPct(item.Pacotes_Carteira)}</td> 
@@ -1106,7 +1185,42 @@
                     <td class="${cpct}${ppct}">${formatPct(apct)}</td>
                 `;
                 tbody.appendChild(row);
+
+                // Renderiza Sub-Linhas
+                if (hasSubItems) {
+                    showLegend = true;
+                    item.SubItems.forEach(sub => {
+                        const subRow = document.createElement('tr');
+                        subRow.className = `sub-row-${parentId} hidden bg-[#161B22] border-l-4 border-l-[#983A1E] text-sm opacity-90`;
+                        
+                        const subAm3 = sub.M3_A_Produzir || 0;
+                        const subApct = sub.Pacotes_A_Produzir || 0;
+                        
+                        // Como a base atual de estoque não tem detalhamento de largura, ele será zero. Mostramos o indicativo (*)
+                        const hasStock = sub.M3_Estoque_Liquido > 0;
+                        const s_cm3 = subAm3 > 0.001 ? 'text-red-400 font-bold' : 'text-gray-500';
+                        const s_cpct = subApct > 0 ? 'text-red-400 font-bold' : 'text-gray-500';
+
+                        subRow.innerHTML = `
+                            <td class="text-right text-gray-500 pr-4">↳</td>
+                            <td colspan="2" class="text-gray-300 font-mono text-base"><i class="fas fa-ruler-combined mr-2 text-gray-500"></i>${sub.Nome}</td>
+                            <td class="text-gray-400">${formatM3(sub.M3_Carteira_Volume)}</td>
+                            <td class="text-gray-500">${hasStock ? formatM3(sub.M3_Estoque_Liquido) : '-'}</td>
+                            <td class="text-gray-400">${formatPct(sub.Pacotes_Carteira)}</td>
+                            <td class="text-gray-500">${sub.Pacotes_Estoque > 0 ? formatPct(sub.Pacotes_Estoque) : '-'}</td>
+                            <td class="${s_cm3}">${hasStock ? formatM3(subAm3) : formatM3(sub.M3_Carteira_Volume) + ' *'}</td>
+                            <td class="${s_cpct}">${sub.Pacotes_Estoque > 0 ? formatPct(subApct) : formatPct(sub.Pacotes_Carteira) + ' *'}</td>
+                        `;
+                        tbody.appendChild(subRow);
+                    });
+                }
             });
+
+            if(showLegend) {
+                legend.classList.remove('hidden');
+            } else {
+                legend.classList.add('hidden');
+            }
         }
 
         function renderDetailTable(filteredItems) {
@@ -1124,7 +1238,6 @@
                 const isItemCompleted = window.completionStatus[itemId] === true; 
                 const poState = poCompletionState[item.PO || 'na'];
                 
-                // Cirúrgico: Substituído item.Perfil por item
                 const emCarteiraPct = Math.round((item.Pendente_Pecas || 0) / getPecasPorPacote(item)); 
                 
                 const emCarteiraM3 = item.Pendente_M3 || 0;
