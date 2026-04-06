@@ -458,14 +458,18 @@
         // --- DADOS DE FALLBACK ---
         const FALLBACK_DATA = {
             estoque: [
-                { Produto: "Pinus (Exemplo)", Perfil: "Deck (Exemplo)", M3_Estoque_Liquido: 50, Pecas_Estoque_Liquido: 1000 }
+                { Produto: "MOLDURAS", Perfil: "LS4S", Largura: 0.0889, Comprimento: 2.4384, M3_Estoque_Liquido: 26.002, Pecas_Estoque_Liquido: 7056.0 },
+                { Produto: "MOLDURAS", Perfil: "LS4S", Largura: 0.0381, Comprimento: 2.4384, M3_Estoque_Liquido: 0.0, Pecas_Estoque_Liquido: 0.0 }, 
+                { Produto: "PAINEL RIPADO", Perfil: "BRANCO", M3_Estoque_Liquido: 59.430, Pecas_Estoque_Liquido: 16281.0 },
+                { Produto: "PAINEL RIPADO", Perfil: "IMPRESSO", M3_Estoque_Liquido: 4.916, Pecas_Estoque_Liquido: 1260.0 },
+                { Produto: "PAINEL RIPADO", Perfil: "PRETO", M3_Estoque_Liquido: 11.471, Pecas_Estoque_Liquido: 2940.0 }
             ],
             pendentes: [
-                { PO: "PO-TESTE", Cliente: "Cliente Exemplo", Perfil: "Deck (Exemplo)", Produto: "Pinus (Exemplo)", Pendente_Pecas: 2000, Pendente_M3: 10, Espessura: 20, Largura: 100, Comprimento: 3000 }
+                { PO: "1084727-00", Cliente: "NOVO", Perfil: "IMPRESSO", Produto: "PAINEL RIPADO", Espessura: 0.012, Largura: 0.13335, Comprimento: 2.4384, Pendente_M3: 21.304, Pendente_Pecas: 5460.0 },
+                { PO: "4500410373", Cliente: "METRIE", Perfil: "LS4S", Produto: "MOLDURAS", Espessura: 0.017, Largura: 0.0381, Comprimento: 2.4384, Pendente_M3: 6.898, Pendente_Pecas: 4368.0 },
+                { PO: "4500410373", Cliente: "METRIE", Perfil: "LS4S", Produto: "MOLDURAS", Espessura: 0.017, Largura: 0.0889, Comprimento: 2.4384, Pendente_M3: 22.287, Pendente_Pecas: 6048.0 }
             ],
-            bom: [
-                { Produto: "Pinus (Exemplo)", Perfil: "Deck (Exemplo)", Componente: "Madeira Bruta", Consumo_M3: 1.1, Unidade_Medida: "M3", Tipo_Insumo: "MATERIA_PRIMA" }
-            ]
+            bom: []
         };
 
         let ALL_PENDING_ITEMS = []; 
@@ -544,7 +548,6 @@
             return formatNumber(num, 0) + ' POs';
         }
 
-        // --- LÓGICA CIRÚRGICA DE PACOTES ---
         function getPecasPorPacote(item) {
             if (typeof item === 'string') return item === 'LS4S' ? 294 : 420;
 
@@ -587,7 +590,6 @@
             return { totalPOs, totalPacotes, totalM3 };
         }
         
-        // --- FUNÇÃO DE CÁLCULO E AGRUPAMENTO ATUALIZADA COM SUB-ITENS ---
         function calcularDashboard(filteredItems, adjustedStockItems) {
             const dashboardMap = {};
 
@@ -620,12 +622,10 @@
                 const pendM3 = item.Pendente_M3 || 0;
                 const pacotes = pendPecas > 0 ? (pendPecas / getPecasPorPacote(item)) : 0;
 
-                // Acumula no Pai
                 dashboardMap[mainKey].Solicitado_Pecas += pendPecas;
                 dashboardMap[mainKey].M3_Carteira_Volume += pendM3;
                 dashboardMap[mainKey].Pacotes_Carteira += pacotes;
 
-                // Acumula no Sub-item
                 dashboardMap[mainKey].subItems[dimName].Solicitado_Pecas += pendPecas;
                 dashboardMap[mainKey].subItems[dimName].M3_Carteira_Volume += pendM3;
                 dashboardMap[mainKey].subItems[dimName].Pacotes_Carteira += pacotes;
@@ -649,11 +649,9 @@
                 const estPecas = item.Pecas_Estoque_Liquido || 0;
                 const estM3 = item.M3_Estoque_Liquido || 0;
 
-                // Acumula no Pai
                 dashboardMap[mainKey].Pecas_Estoque += estPecas;
                 dashboardMap[mainKey].M3_Estoque_Liquido += estM3;
 
-                // Se o estoque tiver dimensão explícita, joga pro Sub-item também.
                 if (item.Largura) {
                     if (!dashboardMap[mainKey].subItems[dimName]) {
                         dashboardMap[mainKey].subItems[dimName] = {
@@ -696,6 +694,16 @@
                      };
                 });
 
+                // ==============================================================
+                // NOVO FILTRO "LIMPA-PÓ": DESCARTA SUB-ITENS ZERADOS
+                // ==============================================================
+                const activeSubItems = subItemsArray.filter(s => 
+                    s.M3_Carteira_Volume > 0.001 || 
+                    Math.abs(s.M3_Estoque_Liquido) > 0.001 ||
+                    s.Pacotes_Carteira > 0 ||
+                    s.Pacotes_Estoque > 0
+                );
+
                 if (parent.M3_Carteira_Volume > 0.001 || parent.M3_Estoque_Liquido > 0.001) {
                     result.push({
                         Produto: parent.Produto,
@@ -706,7 +714,7 @@
                         Pacotes_Estoque: parent.Pacotes_Estoque_Round,
                         M3_A_Produzir: parent.M3_A_Produzir,
                         Pacotes_A_Produzir: parent.Pacotes_A_Produzir,
-                        SubItems: subItemsArray
+                        SubItems: activeSubItems // Usa o array filtrado!
                     });
                 }
             });
@@ -763,7 +771,6 @@
             }
         }
 
-        // --- RENDERIZAÇÃO DO DASHBOARD COM REGRA DE 2 OU MAIS MEDIDAS ---
         function renderDashboard(dashboardData) {
             const tbody = document.getElementById('dashboard-table').querySelector('tbody'); 
             tbody.innerHTML = ''; 
@@ -775,7 +782,6 @@
 
             dashboardData.forEach((item, index) => {
                 const parentId = `row-${index}`;
-                // LÓGICA CHAVE: Só considera "múltiplas medidas" se tiver mais de 1 variação diferente (exclui quando é só Padrão ou só 1 medida específica)
                 const hasMultipleDimensions = item.SubItems && item.SubItems.length > 1;
 
                 const am3 = item.M3_A_Produzir || 0;
@@ -826,7 +832,6 @@
                 `;
                 tbody.appendChild(row);
 
-                // Renderiza Sub-Linhas APENAS SE houver múltiplas dimensões
                 if (hasMultipleDimensions) {
                     item.SubItems.forEach(sub => {
                         const subRow = document.createElement('tr');
@@ -842,9 +847,9 @@
                             <td class="text-right text-gray-500 pr-4">↳</td>
                             <td colspan="2" class="text-gray-300 font-mono text-base"><i class="fas fa-ruler-combined mr-2 text-gray-500"></i>${sub.Nome}</td>
                             <td class="text-gray-400">${formatM3(sub.M3_Carteira_Volume)}</td>
-                            <td class="text-gray-500">${formatM3(sub.M3_Estoque_Liquido)}</td>
+                            <td class="text-gray-400">${formatM3(sub.M3_Estoque_Liquido)}</td>
                             <td class="text-gray-400">${formatPct(sub.Pacotes_Carteira)}</td>
-                            <td class="text-gray-500">${formatPct(sub.Pacotes_Estoque)}</td>
+                            <td class="text-gray-400">${formatPct(sub.Pacotes_Estoque)}</td>
                             <td class="${s_cm3}">${formatM3(subAm3)}</td>
                             <td class="${s_cpct}">${formatPct(subApct)}</td>
                         `;
@@ -1194,6 +1199,7 @@
             };
 
             scriptNovo.onload = () => {
+                // ATENÇÃO: Removi o Fallback e voltei o seu código para ler o "dados_atuais.js" gerado pelo Python
                 if (typeof MOCK_ESTOQUE_LIQUIDO !== 'undefined' && 
                     typeof MOCK_DADOS_PENDENTES_DETALHADOS !== 'undefined' &&
                     typeof DADOS_BOM !== 'undefined') {
