@@ -894,14 +894,14 @@
             generatePDFWithAutoTable(jsPDF, "LISTA DE COMPRAS CONSOLIDADA (MRP GLOBAL)", tempDiv.querySelector('table'), exportButton, () => { document.body.removeChild(tempDiv); });
         }
 
-        // --- FUNÇÃO EXCEL ---
+        // --- FUNÇÃO EXCEL (ATUALIZADA COM DATAS E DETALHES DOS PEDIDOS) ---
         function exportMPSToExcel() {
             const btn = document.getElementById('btn-export-excel');
             const originalText = btn.innerHTML;
             btn.innerHTML = "Gerando Excel...";
             
             try {
-                // Preparar dados para o Excel (achatar a estrutura de sub-itens)
+                // Aba 1: Preparar dados agregados para o Excel (Plano de Produção MPS)
                 const dataForExcel = [];
                 G_DASHBOARD_DATA.forEach(item => {
                     // Adicionar Linha Pai
@@ -940,10 +940,31 @@
                     return;
                 }
 
-                // Criar planilha
-                const ws = XLSX.utils.json_to_sheet(dataForExcel);
+                // Criar o workbook e adicionar a primeira aba do Plano de Produção
+                const wsMPS = XLSX.utils.json_to_sheet(dataForExcel);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Plano de Produção");
+                XLSX.utils.book_append_sheet(wb, wsMPS, "Plano de Produção (MPS)");
+
+                // Aba 2: Adicionar a listagem de Pedidos Detalhados com a DATA respectiva
+                const dataDetailsForExcel = G_FILTERED_PENDING_ITEMS.map(item => {
+                    return {
+                        "PO (Pedido)": item.PO || "N/A",
+                        // Adapte o campo abaixo se sua base JSON usa um nome diferente, ex: item.Data, item.Emissao, item.Data_Pedido
+                        "Data do Pedido": item.Data || item.Data_Pedido || item.Data_Emissao || "N/A",
+                        "Cliente": item.Cliente || "N/A",
+                        "Produto": item.Produto || "N/A",
+                        "Perfil": item.Perfil || "N/A",
+                        "Largura": item.Largura || 0,
+                        "Comprimento": item.Comprimento || 0,
+                        "Pcts Pendentes": Math.round((item.Pendente_Pecas || 0) / getPecasPorPacote(item)),
+                        "M3 Pendente": item.Pendente_M3 || 0
+                    };
+                });
+
+                if (dataDetailsForExcel.length > 0) {
+                    const wsDetails = XLSX.utils.json_to_sheet(dataDetailsForExcel);
+                    XLSX.utils.book_append_sheet(wb, wsDetails, "Detalhes dos Pedidos");
+                }
 
                 // Salvar arquivo
                 const dataStr = new Date().toISOString().split('T')[0];
