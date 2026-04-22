@@ -11,6 +11,7 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -19,7 +20,6 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- SUAS CHAVES REAIS ---
         const firebaseConfig = {
             apiKey: "AIzaSyA5DVhNqTe-kDygovMqZR1vU4TORvVKtOo",
             authDomain: "controle-producao-f444a.firebaseapp.com",
@@ -30,15 +30,12 @@
         };
 
         const dbCollectionPath = "pcp_conclusoes";
-
-        // Inicializa App
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         window.isAdmin = false;
 
-        // Login
         signInAnonymously(auth).then(() => {
             console.log("Firebase: Login ok.");
             iniciarEscutaEmTempoReal();
@@ -69,7 +66,6 @@
             } catch (e) { console.error("Firebase: Erro fatal.", e); }
         }
 
-        // --- ALTERNÂNCIA CELULAR / TV ---
         window.setDeviceMode = function(mode) {
             const body = document.body;
             const btnMobile = document.getElementById('btn-mode-mobile');
@@ -86,7 +82,6 @@
             }
         };
 
-        // Auto-detecção inicial
         window.addEventListener('DOMContentLoaded', () => {
             if (window.innerWidth < 768) {
                 window.setDeviceMode('mobile');
@@ -138,7 +133,6 @@
             btn.disabled = false;
             alert(`Sincronização: ${successCount} itens.`);
         }
-
     </script>
 
     <style>
@@ -161,59 +155,43 @@
             --icon-partial-color: #D97706;
         }
         
-        body { 
-            background-color: var(--bg-primary); 
-            color: var(--text-primary); 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            font-size: 1.3rem; 
-        }
-        
+        body { background-color: var(--bg-primary); color: var(--text-primary); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.3rem; }
         .card { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 1.5rem; }
         .table-container { overflow-x: auto; flex-grow: 1; } 
-        
         table { width: 100%; border-collapse: collapse; border-spacing: 0; margin-top: 1rem; border: 1px solid var(--border-color); }
-        
         th, td { border: 1px solid var(--border-color); padding: 0.8rem 0.5rem; text-align: left; white-space: nowrap; }
         th { background-color: #21262D; color: #FFF; font-weight: 700; position: sticky; top: 0; z-index: 10; font-size: 1.25rem; }
         td { font-size: 1.35rem; } 
-        
         tbody tr:nth-child(even):not(.completed-row):not([class*="sub-row"]) { background-color: rgba(22, 27, 34, 0.5); }
         tbody tr:hover:not(.completed-row):not([class*="sub-row"]) { background-color: #21262D; }
         .completed-row td { background-color: var(--completed-bg) !important; color: var(--completed-text); text-decoration: line-through; }
-
         #dashboard-table th { font-size: 1.8rem; } 
         #dashboard-table td { font-size: 1.9rem; } 
-
         #detail-table th { font-size: 1.8rem; } 
         #detail-table td { font-size: 1.8rem; } 
-        
         input[type="checkbox"] { transform: scale(1.6); cursor: pointer; } 
         .completed-row td input[type="checkbox"] { opacity: 0.7; } 
         input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.3; filter: grayscale(100%); }
-
         .po-status-icon { margin-left: 0.5rem; font-size: 1.2em; font-weight: bold; display: inline-block; }
         .po-status-completed { color: var(--icon-completed-color); }
         .po-status-partial { color: var(--icon-partial-color); }
-        
         .metric-card { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 1.5rem; text-align: center; }
         .metric-label { color: var(--text-secondary); font-size: 1.3rem; margin-bottom: 0.5rem; display: block; font-weight: 500; }
         .metric-value { font-size: 3.5rem; font-weight: 700; color: #FFF; } 
-        
         .btn { background-color: var(--accent-primary); color: #FFF; padding: 0.8rem 1rem; border-radius: 6px; font-weight: 600; font-size: 1.25rem; cursor: pointer; transition: background-color 0.2s; border: none; }
         .btn:hover { background-color: var(--accent-secondary); color: #000; }
         .btn.btn-secondary { background-color: var(--bg-secondary); color: var(--accent-primary1); border: 1px solid var(--border-color); }
         .btn.btn-secondary:hover { background-color: var(--accent-secondary); color: var(--bg-primary); border-color: var(--accent-secondary); }
         .btn-global-export { background-color: #983A1E; color: #FFFFFF; font-weight: bold; padding: 0.75rem 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
         .btn-global-export:hover { background-color: #E1D7C7; color: #000; }
-
+        .btn-excel { background-color: #1D6F42; color: #FFFFFF; } /* Cor do Excel */
+        .btn-excel:hover { background-color: #145532; color: #FFFFFF; }
         .btn-filter { background-color: var(--bg-secondary); color: var(--accent-primary1); padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 1.1rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s; border: 1px solid var(--border-color); margin-right: 0.5rem; }
         .btn-filter:hover { background-color: var(--accent-secondary); color: var(--bg-primary); border-color: var(--accent-secondary); }
-        
         .po-select-list { background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); width: 100%; border-radius: 6px; padding: 0.5rem; height: 12rem; overflow-y: auto; -webkit-tap-highlight-color: transparent; }
         .po-select-list option { padding: 0.6rem 0.5rem; font-size: 1.25rem; white-space: nowrap; color: var(--text-primary); background-color: var(--bg-secondary); cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .po-select-list option:checked, .po-select-list option:hover:checked { background-color: var(--accent-secondary); color: var(--bg-primary); font-weight: bold; }
         .po-select-list option:hover:not(:checked) { background-color: #21262D; }
-
         .status-box { padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; transition: opacity 0.5s ease-out; font-size: 1.2rem; }
         .status-loading { background-color: rgba(251, 191, 36, 0.1); border: 1px solid #D97706; color: #FBBF24; }
         .status-success { background-color: rgba(16, 185, 129, 0.1); border: 1px solid #059669; color: #34D399; }
@@ -222,12 +200,10 @@
         .highlight-green { background-color: var(--highlight-bg-green); color: var(--highlight-green); font-weight: bold; }
         @keyframes pulse-red { 0%, 100% { background-color: var(--highlight-bg-red); } 50% { background-color: rgba(218, 54, 51, 0.4); } }
         .pulse-red { animation: pulse-red 2s infinite ease-in-out; }
-        
         #completed-po-scroller { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0; overflow: hidden; height: 3.8rem; display: none; white-space: nowrap; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
         #scroller-content { display: inline-block; padding-left: 100%; animation: scroll-left 30s linear infinite; color: var(--icon-completed-color); font-weight: bold; font-size: 2.0rem; line-height: 2.9rem; }
         @keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
         #completed-po-scroller:hover #scroller-content { animation-play-state: paused; }
-        
         .modal-overlay { display: none; position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.7); z-index: 40; transition: opacity 0.2s ease-in-out; backdrop-filter: blur(2px); }
         .modal-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; z-index: 50; width: 90%; max-width: 50rem; max-height: 90vh; display: none; flex-direction: column; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); }
@@ -241,14 +217,11 @@
         .mrp-table-modal th { background-color: #2c313a; }
         .mrp-toggle-icon { cursor: pointer; color: var(--accent-primary1); user-select: none; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; background: rgba(255,255,255,0.05); border-radius: 4px; transition: all 0.2s; }
         .mrp-toggle-icon:hover { color: #FFF; background: var(--highlight-green); }
-        
         .admin-status { font-size: 1.1rem; padding: 0.5rem 0.5rem; border-radius: 4px; margin-bottom: 1rem; text-align: center; border: 1px solid transparent; cursor: pointer; }
         .admin-locked { border-color: #30363D; color: #8B949E; background-color: #161B22; }
         .admin-unlocked { border-color: #238636; color: #3fb950; background-color: rgba(35, 134, 54, 0.1); }
-        
         .input-dark { background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.85rem; border-radius: 4px; width: 100%; font-size: 1.3rem; }
         .input-dark:focus { outline: none; border-color: var(--accent-primary); }
-
         body.mode-mobile { font-size: 0.9rem !important; }
         .mode-mobile h1 { font-size: 1.4rem !important; margin-bottom: 0.2rem !important; }
         .mode-mobile h2 { font-size: 1.1rem !important; margin-bottom: 0.5rem !important; }
@@ -401,7 +374,10 @@
                     </tbody>
                 </table>
             </div>
-            <div class="mt-4 flex justify-end">
+            <div class="mt-4 flex justify-end gap-2">
+                <button id="btn-export-excel" class="btn btn-global-export btn-excel">
+                    <i class="fas fa-file-excel mr-2 text-2xl"></i> Exportar MPS (Excel)
+                </button>
                 <button id="btn-global-mrp-pdf" class="btn btn-global-export">
                     <i class="fas fa-file-pdf mr-2 text-2xl"></i> Exportar Lista (PDF)
                 </button>
@@ -425,7 +401,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                          <tr><td colspan="7" class="text-center text-gray-400 py-6">Calculando...</td></tr>
+                         <tr><td colspan="7" class="text-center text-gray-400 py-6">Calculando...</td></tr>
                     </tbody>
                 </table>
              </div>
@@ -455,7 +431,6 @@
     <script> 
         const CAMINHO_JS = "dados_atuais.js";
         
-        // --- DADOS DE FALLBACK ---
         const FALLBACK_DATA = {
             estoque: [
                 { Produto: "MOLDURAS", Perfil: "LS4S", Largura: 0.0889, Comprimento: 2.4384, M3_Estoque_Liquido: 26.002, Pecas_Estoque_Liquido: 7056.0 },
@@ -550,27 +525,17 @@
 
         function getPecasPorPacote(item) {
             if (typeof item === 'string') return item === 'LS4S' ? 294 : 420;
-
             const produto = (item.Produto || '').toUpperCase();
             const perfil = (item.Perfil || '').toUpperCase();
             const largura = parseFloat(item.Largura) || 0;
             const comprimento = parseFloat(item.Comprimento) || 0;
-
-            if (produto.includes('PAINEL RIPADO')) {
-                return 420;
-            }
-
+            if (produto.includes('PAINEL RIPADO')) return 420;
             if (largura > 0) {
-                if (Math.abs(largura - 0.0381) < 0.0001) {
-                    return 1092;
-                } else if (Math.abs(largura - 0.0889) < 0.0001) {
-                    return 504;
-                } else if (Math.abs(largura - 0.1397) < 0.0001) {
-                    if (Math.abs(comprimento - 3.657) < 0.001) {
-                        return 210; // 12 pés
-                    } else {
-                        return 294; // 8 pés
-                    }
+                if (Math.abs(largura - 0.0381) < 0.0001) return 1092;
+                else if (Math.abs(largura - 0.0889) < 0.0001) return 504;
+                else if (Math.abs(largura - 0.1397) < 0.0001) {
+                    if (Math.abs(comprimento - 3.657) < 0.001) return 210;
+                    else return 294;
                 }
             }
             return perfil === 'LS4S' ? 294 : 420;
@@ -592,12 +557,9 @@
         
         function calcularDashboard(filteredItems, adjustedStockItems) {
             const dashboardMap = {};
-
-            // 1. Processa Carteira
             filteredItems.forEach(item => {
                 const mainKey = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
                 const dimName = item.Largura ? `${(item.Largura * 1000).toFixed(1)}mm x ${(item.Comprimento || 0).toFixed(2)}m` : 'Padrão';
-
                 if (!dashboardMap[mainKey]) {
                     dashboardMap[mainKey] = {
                         Produto: item.Produto, Perfil: item.Perfil,
@@ -607,51 +569,39 @@
                         subItems: {}
                     };
                 }
-
                 if (!dashboardMap[mainKey].subItems[dimName]) {
                     dashboardMap[mainKey].subItems[dimName] = {
-                        Nome: dimName,
-                        M3_Carteira_Volume: 0, M3_Estoque_Liquido: 0,
+                        Nome: dimName, M3_Carteira_Volume: 0, M3_Estoque_Liquido: 0,
                         Pacotes_Carteira: 0, Pacotes_Estoque: 0,
-                        Solicitado_Pecas: 0, Pecas_Estoque: 0,
-                        ItemRef: item
+                        Solicitado_Pecas: 0, Pecas_Estoque: 0, ItemRef: item
                     };
                 }
-
                 const pendPecas = item.Pendente_Pecas || 0;
                 const pendM3 = item.Pendente_M3 || 0;
                 const pacotes = pendPecas > 0 ? (pendPecas / getPecasPorPacote(item)) : 0;
-
                 dashboardMap[mainKey].Solicitado_Pecas += pendPecas;
                 dashboardMap[mainKey].M3_Carteira_Volume += pendM3;
                 dashboardMap[mainKey].Pacotes_Carteira += pacotes;
-
                 dashboardMap[mainKey].subItems[dimName].Solicitado_Pecas += pendPecas;
                 dashboardMap[mainKey].subItems[dimName].M3_Carteira_Volume += pendM3;
                 dashboardMap[mainKey].subItems[dimName].Pacotes_Carteira += pacotes;
             });
 
-            // 2. Processa Estoque
             adjustedStockItems.forEach(item => {
                 const mainKey = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`;
                 const dimName = item.Largura ? `${(item.Largura * 1000).toFixed(1)}mm x ${(item.Comprimento || 0).toFixed(2)}m` : 'Padrão';
-
                 if (!dashboardMap[mainKey]) {
                      dashboardMap[mainKey] = {
                         Produto: item.Produto, Perfil: item.Perfil,
                         M3_Carteira_Volume: 0, M3_Estoque_Liquido: 0,
                         Pacotes_Carteira: 0, Pacotes_Estoque: 0,
-                        Solicitado_Pecas: 0, Pecas_Estoque: 0,
-                        subItems: {}
+                        Solicitado_Pecas: 0, Pecas_Estoque: 0, subItems: {}
                     };
                 }
-
                 const estPecas = item.Pecas_Estoque_Liquido || 0;
                 const estM3 = item.M3_Estoque_Liquido || 0;
-
                 dashboardMap[mainKey].Pecas_Estoque += estPecas;
                 dashboardMap[mainKey].M3_Estoque_Liquido += estM3;
-
                 if (item.Largura) {
                     if (!dashboardMap[mainKey].subItems[dimName]) {
                         dashboardMap[mainKey].subItems[dimName] = {
@@ -665,11 +615,9 @@
                 }
             });
 
-            // 3. Calcula "A Produzir" para Pais e Filhos
             const result = [];
             Object.values(dashboardMap).forEach(parent => {
                 const fallbackPecasPorPacote = getPecasPorPacote({ Produto: parent.Produto, Perfil: parent.Perfil });
-
                 parent.M3_A_Produzir = Math.max(0, parent.M3_Carteira_Volume - parent.M3_Estoque_Liquido);
                 parent.Pacotes_Carteira_Round = Math.round(parent.Pacotes_Carteira);
                 parent.Pacotes_Estoque_Round = Math.floor(parent.Pecas_Estoque / fallbackPecasPorPacote);
@@ -679,24 +627,16 @@
                      const subPecasPacote = getPecasPorPacote(sub.ItemRef);
                      const subPacotesCartRound = Math.round(sub.Pacotes_Carteira);
                      const subPacotesEstRound = Math.floor(sub.Pecas_Estoque / subPecasPacote);
-
                      const subM3AProduzir = Math.max(0, sub.M3_Carteira_Volume - sub.M3_Estoque_Liquido);
                      const subPacotesAProduzir = Math.max(0, subPacotesCartRound - subPacotesEstRound);
-
                      return {
-                         Nome: sub.Nome,
-                         M3_Carteira_Volume: sub.M3_Carteira_Volume,
-                         M3_Estoque_Liquido: sub.M3_Estoque_Liquido,
-                         Pacotes_Carteira: subPacotesCartRound,
-                         Pacotes_Estoque: subPacotesEstRound,
-                         M3_A_Produzir: subM3AProduzir,
+                         Nome: sub.Nome, M3_Carteira_Volume: sub.M3_Carteira_Volume,
+                         M3_Estoque_Liquido: sub.M3_Estoque_Liquido, Pacotes_Carteira: subPacotesCartRound,
+                         Pacotes_Estoque: subPacotesEstRound, M3_A_Produzir: subM3AProduzir,
                          Pacotes_A_Produzir: subPacotesAProduzir
                      };
                 });
 
-                // ==============================================================
-                // NOVO FILTRO "LIMPA-PÓ": DESCARTA SUB-ITENS ZERADOS
-                // ==============================================================
                 const activeSubItems = subItemsArray.filter(s => 
                     s.M3_Carteira_Volume > 0.001 || 
                     Math.abs(s.M3_Estoque_Liquido) > 0.001 ||
@@ -706,21 +646,16 @@
 
                 if (parent.M3_Carteira_Volume > 0.001 || parent.M3_Estoque_Liquido > 0.001) {
                     result.push({
-                        Produto: parent.Produto,
-                        Perfil: parent.Perfil,
-                        M3_Carteira_Volume: parent.M3_Carteira_Volume,
-                        M3_Estoque_Liquido: parent.M3_Estoque_Liquido,
-                        Pacotes_Carteira: parent.Pacotes_Carteira_Round,
-                        Pacotes_Estoque: parent.Pacotes_Estoque_Round,
-                        M3_A_Produzir: parent.M3_A_Produzir,
-                        Pacotes_A_Produzir: parent.Pacotes_A_Produzir,
-                        SubItems: activeSubItems // Usa o array filtrado!
+                        Produto: parent.Produto, Perfil: parent.Perfil,
+                        M3_Carteira_Volume: parent.M3_Carteira_Volume, M3_Estoque_Liquido: parent.M3_Estoque_Liquido,
+                        Pacotes_Carteira: parent.Pacotes_Carteira_Round, Pacotes_Estoque: parent.Pacotes_Estoque_Round,
+                        M3_A_Produzir: parent.M3_A_Produzir, Pacotes_A_Produzir: parent.Pacotes_A_Produzir,
+                        SubItems: activeSubItems
                     });
                 }
             });
             
             result.sort((a, b) => { const pc = (a.Produto || '').localeCompare(b.Produto || ''); return pc !== 0 ? pc : (a.Perfil || '').localeCompare(b.Perfil || ''); });
-            
             G_DASHBOARD_DATA = result;
             return result;
         }
@@ -754,17 +689,10 @@
             const rows = document.querySelectorAll(`.sub-row-${parentId}`);
             const btn = document.getElementById(`btn-${parentId}`);
             let isHidden = true;
-
             rows.forEach(row => {
-                if (row.classList.contains('hidden')) {
-                    row.classList.remove('hidden');
-                    isHidden = false;
-                } else {
-                    row.classList.add('hidden');
-                    isHidden = true;
-                }
+                if (row.classList.contains('hidden')) { row.classList.remove('hidden'); isHidden = false; }
+                else { row.classList.add('hidden'); isHidden = true; }
             });
-
             if (btn) {
                 btn.innerHTML = isHidden ? '+' : '-';
                 btn.classList.toggle('bg-white/20', !isHidden);
@@ -774,7 +702,6 @@
         function renderDashboard(dashboardData) {
             const tbody = document.getElementById('dashboard-table').querySelector('tbody'); 
             tbody.innerHTML = ''; 
-            
             if (dashboardData.length === 0) { 
                 tbody.innerHTML = `<tr><td colspan="9" class="text-center text-gray-500 py-6">Nenhum dado para exibir.</td></tr>`; 
                 return; 
@@ -783,41 +710,22 @@
             dashboardData.forEach((item, index) => {
                 const parentId = `row-${index}`;
                 const hasMultipleDimensions = item.SubItems && item.SubItems.length > 1;
-
                 const am3 = item.M3_A_Produzir || 0;
                 const apct = item.Pacotes_A_Produzir || 0;
-                
-                let am3Display = '';
-                let apctDisplay = '';
-                let cm3 = '', cpct = '', pm3 = '', ppct = '';
+                let am3Display = '', apctDisplay = '', cm3 = '', cpct = '', pm3 = '', ppct = '';
 
-                if (hasMultipleDimensions) {
-                    am3Display = '';
-                    apctDisplay = '';
-                } else {
-                    am3Display = formatM3(am3);
-                    apctDisplay = formatPct(apct);
-                    cm3 = am3 > 0.001 ? 'highlight-red' : '';
-                    cpct = apct > 0 ? 'highlight-red' : '';
-                    pm3 = cm3 ? ' pulse-red' : '';
-                    ppct = cpct ? ' pulse-red' : '';
+                if (hasMultipleDimensions) { am3Display = ''; apctDisplay = ''; } 
+                else {
+                    am3Display = formatM3(am3); apctDisplay = formatPct(apct);
+                    cm3 = am3 > 0.001 ? 'highlight-red' : ''; cpct = apct > 0 ? 'highlight-red' : '';
+                    pm3 = cm3 ? ' pulse-red' : ''; ppct = cpct ? ' pulse-red' : '';
                 }
                 
-                let expandIcon = '';
-                if (hasMultipleDimensions) {
-                    expandIcon = `<button onclick="event.stopPropagation(); window.toggleSubRows('${parentId}')" class="text-accent-primary1 hover:text-white transition transform text-xl w-6 h-6 flex items-center justify-center rounded bg-white/5 border border-white/10" id="btn-${parentId}">+</button>`;
-                }
-
-                let toggleIcon = '';
-                if (am3 > 0.001) {
-                    toggleIcon = `<span class="mrp-toggle-icon ml-2" title="Ver Insumos (MRP)" onclick="event.stopPropagation(); window.showMRPModal('${item.Produto}', '${item.Perfil}')"><i class="fas fa-boxes"></i></span>`;
-                }
+                let expandIcon = hasMultipleDimensions ? `<button onclick="event.stopPropagation(); window.toggleSubRows('${parentId}')" class="text-accent-primary1 hover:text-white transition transform text-xl w-6 h-6 flex items-center justify-center rounded bg-white/5 border border-white/10" id="btn-${parentId}">+</button>` : '';
+                let toggleIcon = am3 > 0.001 ? `<span class="mrp-toggle-icon ml-2" title="Ver Insumos (MRP)" onclick="event.stopPropagation(); window.showMRPModal('${item.Produto}', '${item.Perfil}')"><i class="fas fa-boxes"></i></span>` : '';
 
                 const row = document.createElement('tr');
-                if(hasMultipleDimensions) {
-                    row.className = 'cursor-pointer hover:bg-white/5 transition';
-                    row.onclick = () => window.toggleSubRows(parentId);
-                }
+                if(hasMultipleDimensions) { row.className = 'cursor-pointer hover:bg-white/5 transition'; row.onclick = () => window.toggleSubRows(parentId); }
 
                 row.innerHTML = `
                     <td class="text-center flex justify-center items-center gap-2">${expandIcon} ${toggleIcon}</td>
@@ -836,10 +744,8 @@
                     item.SubItems.forEach(sub => {
                         const subRow = document.createElement('tr');
                         subRow.className = `sub-row-${parentId} hidden bg-[#161B22] border-l-4 border-l-[#983A1E] text-sm opacity-90`;
-                        
                         const subAm3 = sub.M3_A_Produzir || 0;
                         const subApct = sub.Pacotes_A_Produzir || 0;
-                        
                         const s_cm3 = subAm3 > 0.001 ? 'text-red-400 font-bold' : 'text-gray-500';
                         const s_cpct = subApct > 0 ? 'text-red-400 font-bold' : 'text-gray-500';
 
@@ -873,15 +779,12 @@
                 const itemId = generateItemId(item); 
                 const isItemCompleted = window.completionStatus[itemId] === true; 
                 const poState = poCompletionState[item.PO || 'na'];
-                
                 const emCarteiraPct = Math.round((item.Pendente_Pecas || 0) / getPecasPorPacote(item)); 
-                
                 const emCarteiraM3 = item.Pendente_M3 || 0;
-                let rowClass = ''; let poIndicatorIcon = '';
+                let rowClass = '', poIndicatorIcon = '';
                 if (poState === 'full') { rowClass = 'completed-row'; poIndicatorIcon = '<span class="po-status-icon po-status-completed">✓</span>'; }
                 else if (poState === 'partial') { poIndicatorIcon = '<span class="po-status-icon po-status-partial">⚠️</span>'; if (isItemCompleted) rowClass = 'completed-row';}
                 else { if (isItemCompleted) rowClass = 'completed-row'; }
-                
                 const isDisabled = window.isAdmin ? '' : 'disabled';
                 
                 tbody.innerHTML += `
@@ -907,11 +810,7 @@
         }
 
         function getItemKey(item) {
-            const p = item.Produto || 'N/A';
-            const f = item.Perfil || 'N/A';
-            const e = (item.Espessura || 0).toFixed(5);
-            const l = (item.Largura || 0).toFixed(5);
-            const c = (item.Comprimento || 0).toFixed(5);
+            const p = item.Produto || 'N/A', f = item.Perfil || 'N/A', e = (item.Espessura || 0).toFixed(5), l = (item.Largura || 0).toFixed(5), c = (item.Comprimento || 0).toFixed(5);
             return `${p}|${f}|${e}|${l}|${c}`;
         }
 
@@ -919,47 +818,28 @@
             bomCache.clear();
             if (!bomData) return;
             bomData.forEach(item => {
-                const bomItem = {
-                    Produto: item.Produto, Perfil: item.Perfil,
-                    Espessura: item.Espessura, Largura: item.Largura, Comprimento: item.Comprimento,
-                    Componente: item.Componente, Consumo_M3: item.Consumo_M3,
-                    Consumo_Peca: item.Consumo_Peca, Unidade_Medida: item.Unidade_Medida,
-                    Tipo_Insumo: item.Tipo_Insumo
-                };
+                const bomItem = { Produto: item.Produto, Perfil: item.Perfil, Espessura: item.Espessura, Largura: item.Largura, Comprimento: item.Comprimento, Componente: item.Componente, Consumo_M3: item.Consumo_M3, Consumo_Peca: item.Consumo_Peca, Unidade_Medida: item.Unidade_Medida, Tipo_Insumo: item.Tipo_Insumo };
                 const key = getItemKey(bomItem);
-                if (!bomCache.has(key)) { bomCache.set(key, []); }
+                if (!bomCache.has(key)) bomCache.set(key, []);
                 bomCache.get(key).push(bomItem);
             });
         }
         
-        function getRecipe(item) {
-            const key = getItemKey(item);
-            return bomCache.get(key) || [];
-        }
+        function getRecipe(item) { const key = getItemKey(item); return bomCache.get(key) || []; }
 
         function calculateMRPForProduct(produto, perfil) {
             const mpsItem = G_DASHBOARD_DATA.find(d => d.Produto === produto && d.Perfil === perfil);
-            if (!mpsItem || mpsItem.M3_A_Produzir <= 0.001) { return {}; }
-            const m3TotalCarteira = mpsItem.M3_Carteira_Volume;
-            const m3TotalAProduzir = mpsItem.M3_A_Produzir;
-            const necessidadesAgregadas = {};
-            const pendingItemsForProduct = G_FILTERED_PENDING_ITEMS.filter(item => 
-                (item.Produto || 'N/A') === (produto || 'N/A') && 
-                (item.Perfil || 'N/A') === (perfil || 'N/A')
-            );
+            if (!mpsItem || mpsItem.M3_A_Produzir <= 0.001) return {};
+            const m3TotalCarteira = mpsItem.M3_Carteira_Volume, m3TotalAProduzir = mpsItem.M3_A_Produzir, necessidadesAgregadas = {};
+            const pendingItemsForProduct = G_FILTERED_PENDING_ITEMS.filter(item => (item.Produto || 'N/A') === (produto || 'N/A') && (item.Perfil || 'N/A') === (perfil || 'N/A'));
             pendingItemsForProduct.forEach(item => {
                 let proporcaoItem = 0;
-                if (m3TotalCarteira > 0.001) { proporcaoItem = (item.Pendente_M3 || 0) / m3TotalCarteira; }
+                if (m3TotalCarteira > 0.001) proporcaoItem = (item.Pendente_M3 || 0) / m3TotalCarteira;
                 const m3ItemAProduzir = m3TotalAProduzir * proporcaoItem;
                 if (m3ItemAProduzir > 0) {
-                    const receita = getRecipe(item); 
-                    receita.forEach(bomItem => {
-                        const componente = bomItem.Componente;
-                        const consumoM3 = bomItem.Consumo_M3 || 0;
-                        const necessidadeBruta = m3ItemAProduzir * consumoM3;
-                        if (!necessidadesAgregadas[componente]) {
-                            necessidadesAgregadas[componente] = { necessidade: 0, unidade: bomItem.Unidade_Medida || 'N/A', tipo: bomItem.Tipo_Insumo || 'N/A' };
-                        }
+                    const receita = getRecipe(item); receita.forEach(bomItem => {
+                        const componente = bomItem.Componente, necessidadeBruta = m3ItemAProduzir * (bomItem.Consumo_M3 || 0);
+                        if (!necessidadesAgregadas[componente]) necessidadesAgregadas[componente] = { necessidade: 0, unidade: bomItem.Unidade_Medida || 'N/A', tipo: bomItem.Tipo_Insumo || 'N/A' };
                         necessidadesAgregadas[componente].necessidade += necessidadeBruta;
                     });
                 }
@@ -970,13 +850,10 @@
         function calculateGlobalMRP() {
             const globalNecessities = {};
             G_DASHBOARD_DATA.forEach(mpsItem => {
-                const m3AProduzir = mpsItem.M3_A_Produzir || 0;
-                if (m3AProduzir > 0.001) {
+                if ((mpsItem.M3_A_Produzir || 0) > 0.001) {
                     const productNecessities = calculateMRPForProduct(mpsItem.Produto, mpsItem.Perfil);
                     for (const [componente, data] of Object.entries(productNecessities)) {
-                        if (!globalNecessities[componente]) {
-                            globalNecessities[componente] = { necessidade: 0, unidade: data.unidade, tipo: data.tipo };
-                        }
+                        if (!globalNecessities[componente]) globalNecessities[componente] = { necessidade: 0, unidade: data.unidade, tipo: data.tipo };
                         globalNecessities[componente].necessidade += data.necessidade;
                     }
                 }
@@ -986,62 +863,98 @@
 
         function generateMRPTableHTML(necessidades) {
             const componentes = Object.keys(necessidades);
-            if (componentes.length === 0) { return `<div class="p-4 text-center text-gray-400">Nenhum insumo encontrado na BOM para os itens a produzir.</div>`; }
+            if (componentes.length === 0) return `<div class="p-4 text-center text-gray-400">Nenhum insumo encontrado na BOM para os itens a produzir.</div>`;
             let tableHTML = `<table class="mrp-table-modal" id="mrp-export-table"><thead><tr><th>INSUMOS</th><th>TIPO</th><th>UNIDADE</th><th>NECESSIDADE</th></tr></thead><tbody>`;
-            componentes.sort();
-            componentes.forEach(componente => {
-                const item = necessidades[componente];
-                let decimals = 3;
-                const tipo = (item.tipo || '').toUpperCase();
-                const unidade = (item.unidade || '').toUpperCase();
-                if (tipo.includes('EMBALAGEM')) { decimals = 3; } else if (unidade === 'UN' || unidade === 'UD') { decimals = 0; }
-                const formatoNumero = formatNumber(item.necessidade, decimals);
-                tableHTML += `<tr><td>${componente}</td><td>${item.tipo}</td><td>${item.unidade}</td><td class="highlight-red">${formatoNumero}</td></tr>`;
+            componentes.sort().forEach(componente => {
+                const item = necessidades[componente]; let decimals = 3;
+                const tipo = (item.tipo || '').toUpperCase(), unidade = (item.unidade || '').toUpperCase();
+                if (tipo.includes('EMBALAGEM')) decimals = 3; else if (unidade === 'UN' || unidade === 'UD') decimals = 0;
+                tableHTML += `<tr><td>${componente}</td><td>${item.tipo}</td><td>${item.unidade}</td><td class="highlight-red">${formatNumber(item.necessidade, decimals)}</td></tr>`;
             });
-            tableHTML += `</tbody></table>`;
-            return tableHTML;
+            return tableHTML + `</tbody></table>`;
         }
 
         window.showMRPModal = function(produto, perfil) {
-            const overlay = document.getElementById('mrp-modal-overlay');
-            const modal = document.getElementById('mrp-modal-container');
-            const title = document.getElementById('mrp-modal-title');
-            const content = document.getElementById('mrp-modal-content');
+            const overlay = document.getElementById('mrp-modal-overlay'), modal = document.getElementById('mrp-modal-container'), title = document.getElementById('mrp-modal-title'), content = document.getElementById('mrp-modal-content');
             title.textContent = `MRP I - INSUMOS DO ${produto} - ${perfil}`.toUpperCase();
             content.innerHTML = `<p class="text-center text-gray-400 py-4">Calculando necessidade...</p>`;
-            overlay.style.display = 'block';
-            modal.style.display = 'flex'; 
-            setTimeout(() => {
-                const necessidades = calculateMRPForProduct(produto, perfil);
-                const tableHTML = generateMRPTableHTML(necessidades);
-                content.innerHTML = tableHTML;
-            }, 50); 
+            overlay.style.display = 'block'; modal.style.display = 'flex'; 
+            setTimeout(() => { content.innerHTML = generateMRPTableHTML(calculateMRPForProduct(produto, perfil)); }, 50); 
         }
 
-        window.hideMRPModal = function() {
-            document.getElementById('mrp-modal-overlay').style.display = 'none';
-            document.getElementById('mrp-modal-container').style.display = 'none';
-            document.getElementById('mrp-modal-content').innerHTML = ''; 
-        }
+        window.hideMRPModal = function() { document.getElementById('mrp-modal-overlay').style.display = 'none'; document.getElementById('mrp-modal-container').style.display = 'none'; document.getElementById('mrp-modal-content').innerHTML = ''; }
         
-        function exportMRPToPDF() {
-            const { jsPDF } = window.jspdf;
-            const modalTitleEl = document.getElementById('mrp-modal-title');
-            const exportButton = document.getElementById('export-mrp-pdf');
-            generatePDFWithAutoTable(jsPDF, modalTitleEl.textContent, '#mrp-export-table', exportButton);
-        }
+        function exportMRPToPDF() { const { jsPDF } = window.jspdf; generatePDFWithAutoTable(jsPDF, document.getElementById('mrp-modal-title').textContent, '#mrp-export-table', document.getElementById('export-mrp-pdf')); }
 
         function exportGlobalMRPToPDF() {
-            const { jsPDF } = window.jspdf;
-            const exportButton = document.getElementById('btn-global-mrp-pdf');
-            const necessidadesGlobais = calculateGlobalMRP();
-            const tableHTML = generateMRPTableHTML(necessidadesGlobais);
-            const tempDiv = document.createElement('div');
-            tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px'; tempDiv.innerHTML = tableHTML;
+            const { jsPDF } = window.jspdf; const exportButton = document.getElementById('btn-global-mrp-pdf');
+            const tableHTML = generateMRPTableHTML(calculateGlobalMRP());
+            const tempDiv = document.createElement('div'); tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px'; tempDiv.innerHTML = tableHTML;
             document.body.appendChild(tempDiv);
-            generatePDFWithAutoTable(jsPDF, "LISTA DE COMPRAS CONSOLIDADA (MRP GLOBAL)", tempDiv.querySelector('table'), exportButton, () => {
-                document.body.removeChild(tempDiv);
-            });
+            generatePDFWithAutoTable(jsPDF, "LISTA DE COMPRAS CONSOLIDADA (MRP GLOBAL)", tempDiv.querySelector('table'), exportButton, () => { document.body.removeChild(tempDiv); });
+        }
+
+        // --- FUNÇÃO EXCEL ---
+        function exportMPSToExcel() {
+            const btn = document.getElementById('btn-export-excel');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "Gerando Excel...";
+            
+            try {
+                // Preparar dados para o Excel (achatar a estrutura de sub-itens)
+                const dataForExcel = [];
+                G_DASHBOARD_DATA.forEach(item => {
+                    // Adicionar Linha Pai
+                    dataForExcel.push({
+                        "Produto": item.Produto,
+                        "Perfil": item.Perfil,
+                        "Dimensão/Sub-item": "TOTAL AGREGADO",
+                        "M3 Carteira": item.M3_Carteira_Volume,
+                        "M3 Estoque": item.M3_Estoque_Liquido,
+                        "Pcts Carteira": item.Pacotes_Carteira,
+                        "Pcts Estoque": item.Pacotes_Estoque,
+                        "M3 A Produzir": item.M3_A_Produzir,
+                        "Pcts A Produzir": item.Pacotes_A_Produzir
+                    });
+
+                    // Adicionar Sub-itens se houver
+                    if (item.SubItems && item.SubItems.length > 0) {
+                        item.SubItems.forEach(sub => {
+                            dataForExcel.push({
+                                "Produto": item.Produto,
+                                "Perfil": item.Perfil,
+                                "Dimensão/Sub-item": sub.Nome,
+                                "M3 Carteira": sub.M3_Carteira_Volume,
+                                "M3 Estoque": sub.M3_Estoque_Liquido,
+                                "Pcts Carteira": sub.Pacotes_Carteira,
+                                "Pcts Estoque": sub.Pacotes_Estoque,
+                                "M3 A Produzir": sub.M3_A_Produzir,
+                                "Pcts A Produzir": sub.Pacotes_A_Produzir
+                            });
+                        });
+                    }
+                });
+
+                if (dataForExcel.length === 0) {
+                    alert("Não há dados para exportar.");
+                    return;
+                }
+
+                // Criar planilha
+                const ws = XLSX.utils.json_to_sheet(dataForExcel);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Plano de Produção");
+
+                // Salvar arquivo
+                const dataStr = new Date().toISOString().split('T')[0];
+                XLSX.writeFile(wb, `MPS_PCP_Flora_${dataStr}.xlsx`);
+
+            } catch (error) {
+                console.error("Erro Excel:", error);
+                alert("Erro ao gerar Excel.");
+            } finally {
+                btn.innerHTML = originalText;
+            }
         }
 
         function generatePDFWithAutoTable(jsPDF, titleText, tableInput, buttonElement, callback) {
@@ -1052,7 +965,7 @@
                 const margin = 15; let startY = margin + 12;
                 doc.setFontSize(14); doc.setTextColor('#0D1117'); doc.text(titleText, margin, startY); startY += 6; 
                 doc.setFontSize(9); doc.setTextColor('#30363D'); doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, margin, startY);
-                if(titleText.includes("GLOBAL")) { startY += 5; const qtdPos = selectedPOs.size > 0 ? selectedPOs.size : "Todas"; doc.text(`Filtro POs: ${qtdPos} pedidos selecionados`, margin, startY); }
+                if(titleText.includes("GLOBAL")) { startY += 5; doc.text(`Filtro POs: ${selectedPOs.size > 0 ? selectedPOs.size : "Todas"} pedidos selecionados`, margin, startY); }
                 startY += 8; 
                 doc.autoTable({
                     html: tableInput, startY: startY, margin: { left: margin, right: margin }, theme: 'grid',
@@ -1078,180 +991,118 @@
              const itemsAReservar = ALL_PENDING_ITEMS.filter(item => { const poValue = item && item.PO ? String(item.PO) : null; return poValue && reservedPOs.has(poValue); });
              const reservedStockSummary = itemsAReservar.reduce((acc, item) => { const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`; if (!acc[key]) acc[key] = { Pecas_Reservadas: 0, M3_Reservados: 0 }; acc[key].Pecas_Reservadas += item.Pendente_Pecas || 0; acc[key].M3_Reservados += item.Pendente_M3 || 0; return acc; }, {});
              const adjustedStockItems = ALL_STOCK_ITEMS.map(stockItem => {
-                 const key = `${stockItem.Produto || 'N/A'}|${stockItem.Perfil || 'N/A'}`; const reserva = reservedStockSummary[key]; let M3_Estoque_Liquido = stockItem.M3_Estoque_Liquido || 0; let Pecas_Estoque_Liquido = stockItem.Pecas_Estoque_Liquido || 0;
+                 const key = `${stockItem.Produto || 'N/A'}|${stockItem.Perfil || 'N/A'}`; const reserva = reservedStockSummary[key]; let M3_Estoque_Liquido = stockItem.M3_Estoque_Liquido || 0, Pecas_Estoque_Liquido = stockItem.Pecas_Estoque_Liquido || 0;
                  if (reserva) { M3_Estoque_Liquido -= reserva.M3_Reservados; Pecas_Estoque_Liquido -= reserva.Pecas_Reservadas; }
                  return { ...stockItem, M3_Estoque_Liquido, Pecas_Estoque_Liquido };
              });
-             const dashboardData = calcularDashboard(filteredItemsEmCarteira, adjustedStockItems);
-             renderDashboard(dashboardData);
+             renderDashboard(calcularDashboard(filteredItemsEmCarteira, adjustedStockItems));
              renderDetailTable(filteredItemsEmCarteira);
         }
 
         function generateItemId(item) {
-             const po = (item.PO || 'na').replace(/[.\#$[\]/]/g, '_');
-             const cli = (item.Cliente || 'na').replace(/[.\#$[\]/]/g, '_');
-             const perf = (item.Perfil || 'na').replace(/[.\#$[\]/]/g, '_');
-             const prod = (item.Produto || 'na').replace(/[.\#$[\]/]/g, '_');
-             const e = (item.Espessura || 0).toFixed(5);
-             const l = (item.Largura || 0).toFixed(5);
-             const c = (item.Comprimento || 0).toFixed(5);
+             const po = (item.PO || 'na').replace(/[.\#$[\]/]/g, '_'), cli = (item.Cliente || 'na').replace(/[.\#$[\]/]/g, '_'), perf = (item.Perfil || 'na').replace(/[.\#$[\]/]/g, '_'), prod = (item.Produto || 'na').replace(/[.\#$[\]/]/g, '_'), e = (item.Espessura || 0).toFixed(5), l = (item.Largura || 0).toFixed(5), c = (item.Comprimento || 0).toFixed(5);
              return `${po}|${cli}|${perf}|${prod}|${e}|${l}|${c}`;
-         }
+        }
 
         window.toggleItemCompletion = function(checkboxElement) {
-             const row = checkboxElement.closest('tr'); 
-             const itemId = row.getAttribute('data-item-id'); 
-             const isChecked = checkboxElement.checked;
-             const po = itemId.split('|')[0];
-             if (!itemId || po === 'na') { console.error("ID inválido:", itemId); return; }
+             const row = checkboxElement.closest('tr'), itemId = row.getAttribute('data-item-id'), isChecked = checkboxElement.checked, po = itemId.split('|')[0];
+             if (!itemId || po === 'na') return;
              window.completionStatus[itemId] = isChecked;
-             window.updatePOVisualStatus(po);
-             window.saveItemStatusToCloud(itemId, isChecked);
+             window.updatePOVisualStatus(po); window.saveItemStatusToCloud(itemId, isChecked);
         }
         
-        window.updateAllVisuals = function() {
-            renderDetailTable(G_FILTERED_PENDING_ITEMS);
-            window.recalculateAndRenderScroller();
-        }
+        window.updateAllVisuals = function() { renderDetailTable(G_FILTERED_PENDING_ITEMS); window.recalculateAndRenderScroller(); }
         
         window.updatePOVisualStatus = function(po) {
-             const tbody = document.getElementById('detail-table').querySelector('tbody');
-             const rowsForPO = tbody.querySelectorAll(`tr[data-item-id^="${po}|"]`);
+             const tbody = document.getElementById('detail-table').querySelector('tbody'), rowsForPO = tbody.querySelectorAll(`tr[data-item-id^="${po}|"]`);
              if (rowsForPO.length === 0) { window.recalculateAndRenderScroller(); return; }
-             let total = 0; let completed = 0;
-             rowsForPO.forEach(r => { total++; const id = r.getAttribute('data-item-id'); if (window.completionStatus[id] === true) completed++; });
-             let state = 'pending'; let icon = '';
-             if (completed === 0) state = 'pending';
-             else if (completed === total) { state = 'full'; icon = '<span class="po-status-icon po-status-completed">✓</span>';}
-             else { state = 'partial'; icon = '<span class="po-status-icon po-status-partial">⚠️</span>';}
+             let total = 0, completed = 0;
+             rowsForPO.forEach(r => { total++; if (window.completionStatus[r.getAttribute('data-item-id')] === true) completed++; });
+             let state = completed === 0 ? 'pending' : (completed === total ? 'full' : 'partial'), icon = state === 'full' ? '✓' : (state === 'partial' ? '⚠️' : '');
              rowsForPO.forEach(r => {
-                 const poCell = r.cells[1]; const itemId = r.getAttribute('data-item-id'); const isItemDone = window.completionStatus[itemId] === true;
-                 const poText = itemId.split('|')[0]; 
-                 r.classList.remove('completed-row'); const existingIcon = poCell.querySelector('.po-status-icon'); if (existingIcon) existingIcon.remove();
+                 const poCell = r.cells[1], itemId = r.getAttribute('data-item-id'), isItemDone = window.completionStatus[itemId] === true, poText = itemId.split('|')[0];
+                 r.classList.remove('completed-row'); if (poCell.querySelector('.po-status-icon')) poCell.querySelector('.po-status-icon').remove();
                  poCell.textContent = poText;
-                 if (state === 'full') { r.classList.add('completed-row'); poCell.innerHTML += icon; }
-                 else if (state === 'partial') { poCell.innerHTML += icon; if (isItemDone) r.classList.add('completed-row'); }
-                 else { if (isItemDone) r.classList.add('completed-row'); }
+                 if (state === 'full') { r.classList.add('completed-row'); poCell.innerHTML += `<span class="po-status-icon po-status-completed">${icon}</span>`; }
+                 else if (state === 'partial') { poCell.innerHTML += `<span class="po-status-icon po-status-partial">${icon}</span>`; if (isItemDone) r.classList.add('completed-row'); }
+                 else if (isItemDone) r.classList.add('completed-row');
              });
              window.recalculateAndRenderScroller();
         }
         
         window.recalculateAndRenderScroller = function() {
-             const completedPOsList = [];
-             const allItemsByPO = ALL_PENDING_ITEMS.reduce((acc, item) => { const po = item.PO || 'na'; if (po === 'na') return acc; if (!acc[po]) acc[po] = []; acc[po].push(item); return acc; }, {});
+             const completedPOsList = [], allItemsByPO = ALL_PENDING_ITEMS.reduce((acc, item) => { const po = item.PO || 'na'; if (po !== 'na') { if (!acc[po]) acc[po] = []; acc[po].push(item); } return acc; }, {});
              for (const po in allItemsByPO) {
-                 const items = allItemsByPO[po]; let allDone = true;
-                 if (items.length === 0) allDone = false;
-                 else { for (const item of items) { const id = generateItemId(item); if (window.completionStatus[id] !== true) { allDone = false; break; }}}
+                 const items = allItemsByPO[po]; let allDone = items.length > 0;
+                 for (const item of items) { if (window.completionStatus[generateItemId(item)] !== true) { allDone = false; break; }}
                  if (allDone) completedPOsList.push(po);
              }
-             completedPOsList.sort(); renderCompletedPOScroller(completedPOsList);
+             renderCompletedPOScroller(completedPOsList.sort());
         }
 
         function carregarScriptDados() {
-            const globalStatus = document.getElementById('global-status'); 
-            const dataStatus = document.getElementById('data-status'); 
-            const lastUpdated = document.getElementById('data-last-updated');
-            
-            globalStatus.textContent = `Carregando ${CAMINHO_JS}...`; 
-            globalStatus.className = 'status-box status-loading !mb-0'; 
-            globalStatus.style.opacity = '1'; 
+            const globalStatus = document.getElementById('global-status'), dataStatus = document.getElementById('data-status'), lastUpdated = document.getElementById('data-last-updated');
+            globalStatus.textContent = `Carregando ${CAMINHO_JS}...`; globalStatus.className = 'status-box status-loading !mb-0'; globalStatus.style.opacity = '1'; 
             if (globalStatusTimeout) clearTimeout(globalStatusTimeout);
-            dataStatus.textContent = 'Carregando...'; 
-            lastUpdated.textContent = '';
+            dataStatus.textContent = 'Carregando...'; lastUpdated.textContent = '';
             
             const scriptAntigo = document.getElementById('script-dados'); if (scriptAntigo) scriptAntigo.remove();
-            const ts = new Date().getTime(); const src = `${CAMINHO_JS}?v=${ts}`;
-            const scriptNovo = document.createElement('script'); scriptNovo.id = 'script-dados'; scriptNovo.src = src;
+            const scriptNovo = document.createElement('script'); scriptNovo.id = 'script-dados'; scriptNovo.src = `${CAMINHO_JS}?v=${new Date().getTime()}`;
 
             const iniciarComDados = (estoque, pendentes, bom, origem) => {
-                console.log(`Iniciando com dados de: ${origem}`);
-                ALL_STOCK_ITEMS = estoque;
-                ALL_PENDING_ITEMS = pendentes.filter(item => (item.Pendente_Pecas || 0) > 0 || (item.Pendente_M3 || 0) > 0.001);
-                ALL_BOM_DATA = bom;
-                
-                buildBomCache(ALL_BOM_DATA);
-                uniquePOs = [...new Set(ALL_PENDING_ITEMS.map(item => item.PO))].sort();
-                
+                ALL_STOCK_ITEMS = estoque; ALL_PENDING_ITEMS = pendentes.filter(item => (item.Pendente_Pecas || 0) > 0 || (item.Pendente_M3 || 0) > 0.001); ALL_BOM_DATA = bom;
+                buildBomCache(ALL_BOM_DATA); uniquePOs = [...new Set(ALL_PENDING_ITEMS.map(item => item.PO))].sort();
                 if (ALL_PENDING_ITEMS.length === 0 && ALL_STOCK_ITEMS.length === 0) { 
-                    globalStatus.textContent = `AVISO: Dados vazios (${origem}).`; 
-                    globalStatus.className = 'status-box status-loading !mb-0'; 
+                    globalStatus.textContent = `AVISO: Dados vazios (${origem}).`; globalStatus.className = 'status-box status-loading !mb-0';
                     uniquePOs = []; selectedPOs.clear(); reservedPOs.clear(); 
                 } else {
-                    const itemsEmCarteira = ALL_PENDING_ITEMS;
-                    globalStatus.textContent = `SUCESSO: ${itemsEmCarteira.length} itens carregados (${origem}).`; 
-                    globalStatus.className = 'status-box status-success !mb-0'; 
+                    globalStatus.textContent = `SUCESSO: ${ALL_PENDING_ITEMS.length} itens carregados (${origem}).`; globalStatus.className = 'status-box status-success !mb-0'; 
                     globalStatusTimeout = setTimeout(() => { globalStatus.style.opacity = '0'; }, 3000);
-                    
                     selectedPOs = new Set([...selectedPOs].filter(po => uniquePOs.includes(po)));
                     reservedPOs = new Set([...reservedPOs].filter(po => uniquePOs.includes(po)));
                     if (selectedPOs.size === 0 && uniquePOs.length > 0) selectedPOs = new Set(uniquePOs);
                 }
-                
-                renderPOFilters();
-                const summary = calcularResumoTotal(ALL_PENDING_ITEMS);
-                renderSummary(summary);
-                updateDashboardAndDetail();
-                
-                lastDataLoadTime = new Date(); 
-                dataStatus.textContent = `'${origem}' carregado.`; 
-                lastUpdated.textContent = `Atualizado: ${lastDataLoadTime.toLocaleTimeString('pt-BR')}`;
+                renderPOFilters(); renderSummary(calcularResumoTotal(ALL_PENDING_ITEMS)); updateDashboardAndDetail();
+                lastDataLoadTime = new Date(); dataStatus.textContent = `'${origem}' carregado.`; lastUpdated.textContent = `Atualizado: ${lastDataLoadTime.toLocaleTimeString('pt-BR')}`;
             };
 
             scriptNovo.onload = () => {
-                // ATENÇÃO: Removi o Fallback e voltei o seu código para ler o "dados_atuais.js" gerado pelo Python
-                if (typeof MOCK_ESTOQUE_LIQUIDO !== 'undefined' && 
-                    typeof MOCK_DADOS_PENDENTES_DETALHADOS !== 'undefined' &&
-                    typeof DADOS_BOM !== 'undefined') {
+                if (typeof MOCK_ESTOQUE_LIQUIDO !== 'undefined' && typeof MOCK_DADOS_PENDENTES_DETALHADOS !== 'undefined' && typeof DADOS_BOM !== 'undefined') {
                     iniciarComDados(MOCK_ESTOQUE_LIQUIDO, MOCK_DADOS_PENDENTES_DETALHADOS, DADOS_BOM, "Arquivo Externo");
                 } else {
-                    console.warn("Arquivo carregado mas variáveis indefinidas. Usando Fallback.");
                     iniciarComDados(FALLBACK_DATA.estoque, FALLBACK_DATA.pendentes, FALLBACK_DATA.bom, "Exemplo (Fallback)");
-                    alert("Aviso: O arquivo 'dados_atuais.js' foi lido, mas as variáveis não foram encontradas. Usando dados de exemplo.");
+                    alert("Aviso: 'dados_atuais.js' lido, mas variáveis não encontradas.");
                 }
             };
-            
-            scriptNovo.onerror = (e) => {
-                console.error(`Erro ao carregar script: ${src}`, e);
-                console.warn("Usando Fallback devido a erro de carregamento.");
-                iniciarComDados(FALLBACK_DATA.estoque, FALLBACK_DATA.pendentes, FALLBACK_DATA.bom, "Exemplo (Fallback)");
-            };
-
+            scriptNovo.onerror = () => { iniciarComDados(FALLBACK_DATA.estoque, FALLBACK_DATA.pendentes, FALLBACK_DATA.bom, "Exemplo (Fallback)"); };
             document.head.appendChild(scriptNovo);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const poSelect = document.getElementById('po-select');
-            const poSelectReserva = document.getElementById('po-select-reserva');
-            
             carregarScriptDados(); 
-
             document.getElementById('reload-button').addEventListener('click', carregarScriptDados);
             document.getElementById('select-all-po').addEventListener('click', selectAllPOs);
             document.getElementById('clear-all-po').addEventListener('click', clearAllPOs);
             document.getElementById('select-all-po-reserva').addEventListener('click', selectAllPOsReserva);
             document.getElementById('clear-all-po-reserva').addEventListener('click', clearAllPOsReserva);
-
             document.getElementById('export-mrp-pdf').addEventListener('click', exportMRPToPDF);
             document.getElementById('btn-global-mrp-pdf').addEventListener('click', exportGlobalMRPToPDF);
+            document.getElementById('btn-export-excel').addEventListener('click', exportMPSToExcel);
 
-             const handleInteraction = (event) => {
-                 const selectElement = event.currentTarget;
-                 const currentScrollTop = selectElement.scrollTop;
-                 if (event.target.tagName === 'OPTION') event.preventDefault();
-                 const option = event.target;
-                 if (option.tagName === 'OPTION') {
-                       option.selected = !option.selected;
-                       selectElement.dispatchEvent(new Event('change'));
-                       requestAnimationFrame(() => { selectElement.scrollTop = currentScrollTop; });
+            const handleInteraction = (event) => {
+                 const selectElement = event.currentTarget, currentScrollTop = selectElement.scrollTop;
+                 if (event.target.tagName === 'OPTION') {
+                     event.preventDefault(); event.target.selected = !event.target.selected;
+                     selectElement.dispatchEvent(new Event('change'));
+                     requestAnimationFrame(() => { selectElement.scrollTop = currentScrollTop; });
                  }
-             };
-             poSelect.addEventListener('mousedown', handleInteraction);
-             poSelect.addEventListener('touchstart', handleInteraction, { passive: false });
-             poSelect.addEventListener('change', handleMainPOSelectionChange);
-             poSelectReserva.addEventListener('mousedown', handleInteraction);
-             poSelectReserva.addEventListener('touchstart', handleInteraction, { passive: false });
-             poSelectReserva.addEventListener('change', handleReservationSelectionChange);
+            };
+            ['po-select', 'po-select-reserva'].forEach(id => {
+                const el = document.getElementById(id);
+                el.addEventListener('mousedown', handleInteraction);
+                el.addEventListener('touchstart', handleInteraction, { passive: false });
+                el.addEventListener('change', id === 'po-select' ? handleMainPOSelectionChange : handleReservationSelectionChange);
+            });
         });
     </script>
 </body>
