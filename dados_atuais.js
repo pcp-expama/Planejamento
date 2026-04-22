@@ -86,6 +86,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075411-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "22/09/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -102,6 +103,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075411-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "22/09/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -118,6 +120,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075412-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "22/09/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -134,6 +137,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075412-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "22/09/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -150,6 +154,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075413-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "22/09/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -166,6 +171,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075413-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "22/09/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -182,6 +188,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075763-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "25/09/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -198,6 +205,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075763-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "25/09/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -214,6 +222,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075764-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "25/09/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -230,6 +239,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075764-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "25/09/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -246,6 +256,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075765-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "25/09/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -262,6 +273,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075765-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "25/09/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -278,6 +290,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075976-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "29/09/2025",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -294,6 +307,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1075976-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "29/09/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -310,6 +324,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1077915-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "07/11/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -326,6 +341,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1077915-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "07/11/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -342,6 +358,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1078784-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "24/11/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -358,6 +375,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1078784-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "24/11/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -374,6 +392,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1078788-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "24/11/2025",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -390,6 +409,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1078788-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "24/11/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -406,6 +426,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1078788-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "24/11/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -422,6 +443,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1080129-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "15/12/2025",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -438,6 +460,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1080129-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "15/12/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -454,6 +477,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1080129-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "15/12/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -470,6 +494,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1080130-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "15/12/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -486,6 +511,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1080131-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "15/12/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -502,6 +528,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1080131-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "15/12/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -518,6 +545,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1084070-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "02/03/2026",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -534,6 +562,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1084070-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "02/03/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -550,6 +579,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1084725-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "16/03/2026",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -566,6 +596,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1084725-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "16/03/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -582,6 +613,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1084726-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "16/03/2026",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -598,6 +630,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1084726-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "16/03/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -614,6 +647,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1084727-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "16/03/2026",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -630,6 +664,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1084727-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "16/03/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -646,6 +681,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086325-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "06/04/2026",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -662,6 +698,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086325-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "06/04/2026",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -678,6 +715,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086325-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "06/04/2026",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -694,6 +732,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086325-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "06/04/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -710,6 +749,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086325-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "06/04/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -726,6 +766,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086326-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "06/04/2026",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -742,6 +783,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086326-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "06/04/2026",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -758,6 +800,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086326-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "06/04/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -774,6 +817,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086326-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "06/04/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -790,6 +834,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086489-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "09/04/2026",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -806,6 +851,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086489-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "09/04/2026",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -822,6 +868,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086489-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "09/04/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -838,6 +885,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086492-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "09/04/2026",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -854,6 +902,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086492-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "09/04/2026",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -870,6 +919,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086492-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "09/04/2026",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -886,6 +936,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086492-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "09/04/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -902,6 +953,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086492-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "09/04/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -918,6 +970,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086496-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "09/04/2026",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -934,6 +987,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "1086496-00",
     "Cliente": "NOVO",
+    "Data_Pedido": "09/04/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -950,6 +1004,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2353036",
     "Cliente": "ECMD",
+    "Data_Pedido": "17/09/2025",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -966,6 +1021,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2353036",
     "Cliente": "ECMD",
+    "Data_Pedido": "17/09/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -982,6 +1038,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2353036",
     "Cliente": "ECMD",
+    "Data_Pedido": "17/09/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -998,6 +1055,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2353038",
     "Cliente": "ECMD",
+    "Data_Pedido": "17/09/2025",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1014,6 +1072,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2353038",
     "Cliente": "ECMD",
+    "Data_Pedido": "17/09/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1030,6 +1089,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2353038",
     "Cliente": "ECMD",
+    "Data_Pedido": "17/09/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1046,6 +1106,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2361434",
     "Cliente": "ECMD",
+    "Data_Pedido": "02/10/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1062,6 +1123,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2361434",
     "Cliente": "ECMD",
+    "Data_Pedido": "02/10/2025",
     "Perfil": "LS4S",
     "Produto": "MOLDURAS",
     "Espessura": 0.017,
@@ -1078,6 +1140,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2361434",
     "Cliente": "ECMD",
+    "Data_Pedido": "02/10/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1094,6 +1157,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2364746",
     "Cliente": "ECMD",
+    "Data_Pedido": "15/10/2025",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1110,6 +1174,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2364746",
     "Cliente": "ECMD",
+    "Data_Pedido": "15/10/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1126,6 +1191,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2364746",
     "Cliente": "ECMD",
+    "Data_Pedido": "15/10/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1142,6 +1208,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2364747",
     "Cliente": "ECMD",
+    "Data_Pedido": "15/10/2025",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1158,6 +1225,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2364747",
     "Cliente": "ECMD",
+    "Data_Pedido": "15/10/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1174,6 +1242,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2364747",
     "Cliente": "ECMD",
+    "Data_Pedido": "15/10/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1190,6 +1259,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2364748",
     "Cliente": "ECMD",
+    "Data_Pedido": "15/10/2025",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1206,6 +1276,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2364748",
     "Cliente": "ECMD",
+    "Data_Pedido": "15/10/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1222,6 +1293,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2367925",
     "Cliente": "ECMD",
+    "Data_Pedido": "28/10/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1238,6 +1310,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2367925",
     "Cliente": "ECMD",
+    "Data_Pedido": "28/10/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1254,6 +1327,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2367926",
     "Cliente": "ECMD",
+    "Data_Pedido": "28/10/2025",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1270,6 +1344,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2367926",
     "Cliente": "ECMD",
+    "Data_Pedido": "28/10/2025",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1286,6 +1361,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2398250",
     "Cliente": "ECMD",
+    "Data_Pedido": "10/03/2026",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1302,6 +1378,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2398250",
     "Cliente": "ECMD",
+    "Data_Pedido": "10/03/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1318,6 +1395,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2398251",
     "Cliente": "ECMD",
+    "Data_Pedido": "10/03/2026",
     "Perfil": "BRANCO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1334,6 +1412,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2398251",
     "Cliente": "ECMD",
+    "Data_Pedido": "10/03/2026",
     "Perfil": "IMPRESSO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1350,6 +1429,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "2398251",
     "Cliente": "ECMD",
+    "Data_Pedido": "10/03/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1366,6 +1446,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "4500394271",
     "Cliente": "METRIE",
+    "Data_Pedido": "28/10/2025",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1382,6 +1463,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "4500404116",
     "Cliente": "METRIE",
+    "Data_Pedido": "03/02/2026",
     "Perfil": "PRETO",
     "Produto": "PAINEL RIPADO",
     "Espessura": 0.012,
@@ -1398,6 +1480,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "4500410373",
     "Cliente": "METRIE",
+    "Data_Pedido": "26/03/2026",
     "Perfil": "LS4S",
     "Produto": "MOLDURAS",
     "Espessura": 0.017,
@@ -1414,6 +1497,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "4500410373",
     "Cliente": "METRIE",
+    "Data_Pedido": "26/03/2026",
     "Perfil": "LS4S",
     "Produto": "MOLDURAS",
     "Espessura": 0.017,
