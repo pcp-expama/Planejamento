@@ -282,8 +282,32 @@
                  alt="Logotipo do Power BI" style="width: 10px; height: 10px; border: none;" class="mr-2">
             Dashboard Produção
         </a>
-        
-        <h2 class="text-2xl font-semibold mb-2 border-b border-gray-700 pb-2">Filtro de POs</h2>
+
+        <h2 class="text-2xl font-semibold mb-2 border-b border-gray-700 pb-2 mt-2">Filtro de Data</h2>
+        <div class="flex flex-col gap-2 mb-4">
+            <div class="flex gap-2">
+                <div class="w-1/2">
+                    <label class="text-sm text-gray-400">De (Antiga):</label>
+                    <input type="date" id="date-start" class="input-dark text-sm p-1">
+                </div>
+                <div class="w-1/2">
+                    <label class="text-sm text-gray-400">Até (Nova):</label>
+                    <input type="date" id="date-end" class="input-dark text-sm p-1">
+                </div>
+            </div>
+            <div>
+                <select id="date-sort" class="input-dark text-sm p-1 w-full">
+                    <option value="default">Ordenação Padrão (PO/Produto)</option>
+                    <option value="asc">Mais Antiga para Mais Nova</option>
+                    <option value="desc">Mais Nova para Mais Antiga</option>
+                </select>
+            </div>
+            <div class="flex gap-1 mt-1">
+                <button id="btn-apply-date" class="btn-filter w-1/2 !mr-0">Aplicar</button>
+                <button id="btn-clear-date" class="btn-filter w-1/2 !mr-0">Limpar</button>
+            </div>
+        </div>
+        <h2 class="text-2xl font-semibold mb-2 border-b border-gray-700 pb-2 mt-2">Filtro de POs</h2>
         <div class="mb-2 flex gap-1">
             <button id="select-all-po" class="btn-filter w-1/2">Todas</button>
             <button id="clear-all-po" class="btn-filter w-1/2">Limpar</button>
@@ -309,7 +333,7 @@
         <div class="mt-auto border-t border-gray-700 pt-4">
             <div id="data-status" class="text-base text-gray-400 mode-mobile-text">Verificando...</div>
              <div id="data-last-updated" class="text-base text-gray-500 mt-1 mode-mobile-text"></div>
-             <p class="text-base text-gray-500 mt-2 mode-mobile-text">Versão: 1.1.0 </p>
+             <p class="text-base text-gray-500 mt-2 mode-mobile-text">Versão: 1.1.1 </p>
              <p class="text-base text-gray-500 mt-1 mode-mobile-text">© Copyright 2026 Flora Exportadora</p>
         </div>
     </aside>
@@ -393,7 +417,7 @@
                         <tr>
                             <th style="width: 30px;" class="text-center">OK?</th>
                             <th>PO</th>
-                            <th>Cliente</th>
+                            <th>Data</th> <th>Cliente</th>
                             <th>Perfil</th>
                             <th>Produto</th>
                             <th>Pcts Carteira</th>
@@ -401,11 +425,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                         <tr><td colspan="7" class="text-center text-gray-400 py-6">Calculando...</td></tr>
+                         <tr><td colspan="8" class="text-center text-gray-400 py-6">Calculando...</td></tr>
                     </tbody>
                 </table>
              </div>
-             <p id="detail-empty" class="text-lg text-green-400 mt-4 hidden mode-mobile-text">Nenhum item em carteira para as POs selecionadas!</p>
+             <p id="detail-empty" class="text-lg text-green-400 mt-4 hidden mode-mobile-text">Nenhum item em carteira para as opções selecionadas!</p>
         </div>
 
     </main>
@@ -440,9 +464,9 @@
                 { Produto: "PAINEL RIPADO", Perfil: "PRETO", M3_Estoque_Liquido: 11.471, Pecas_Estoque_Liquido: 2940.0 }
             ],
             pendentes: [
-                { PO: "1084727-00", Cliente: "NOVO", Perfil: "IMPRESSO", Produto: "PAINEL RIPADO", Espessura: 0.012, Largura: 0.13335, Comprimento: 2.4384, Pendente_M3: 21.304, Pendente_Pecas: 5460.0 },
-                { PO: "4500410373", Cliente: "METRIE", Perfil: "LS4S", Produto: "MOLDURAS", Espessura: 0.017, Largura: 0.0381, Comprimento: 2.4384, Pendente_M3: 6.898, Pendente_Pecas: 4368.0 },
-                { PO: "4500410373", Cliente: "METRIE", Perfil: "LS4S", Produto: "MOLDURAS", Espessura: 0.017, Largura: 0.0889, Comprimento: 2.4384, Pendente_M3: 22.287, Pendente_Pecas: 6048.0 }
+                { PO: "1084727-00", Data: "2026-03-15", Cliente: "NOVO", Perfil: "IMPRESSO", Produto: "PAINEL RIPADO", Espessura: 0.012, Largura: 0.13335, Comprimento: 2.4384, Pendente_M3: 21.304, Pendente_Pecas: 5460.0 },
+                { PO: "4500410373", Data: "2026-04-10", Cliente: "METRIE", Perfil: "LS4S", Produto: "MOLDURAS", Espessura: 0.017, Largura: 0.0381, Comprimento: 2.4384, Pendente_M3: 6.898, Pendente_Pecas: 4368.0 },
+                { PO: "4500410374", Data: "2026-04-12", Cliente: "METRIE", Perfil: "LS4S", Produto: "MOLDURAS", Espessura: 0.017, Largura: 0.0889, Comprimento: 2.4384, Pendente_M3: 22.287, Pendente_Pecas: 6048.0 }
             ],
             bom: []
         };
@@ -521,6 +545,14 @@
         function formatPO(num) {
             if (typeof num !== 'number' || isNaN(num)) return '0 POs';
             return formatNumber(num, 0) + ' POs';
+        }
+
+        // NOVO: Função para extrair e criar objeto de data válido
+        function getItemDate(item) {
+            const dateStr = item.Data || item.Data_Pedido || item.Data_Emissao;
+            if (!dateStr) return null;
+            const d = new Date(dateStr);
+            return isNaN(d.getTime()) ? null : d;
         }
 
         function getPecasPorPacote(item) {
@@ -767,13 +799,29 @@
 
         function renderDetailTable(filteredItems) {
             const tbody = document.getElementById('detail-table').querySelector('tbody'); const emptyMsg = document.getElementById('detail-empty'); tbody.innerHTML = '';
-               if (filteredItems.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-6">${(selectedPOs.size === 0 && uniquePOs.length > 0) ? 'Nenhuma PO selecionada.' : 'Nenhum item encontrado.'}</td></tr>`; emptyMsg.style.display = 'block'; renderCompletedPOScroller([]); return; }
-               emptyMsg.style.display = 'none';
-               const poStatusMap = {}; const poCompletionState = {}; const completedPOs = [];
-               filteredItems.forEach(item => { const po = item.PO || 'na'; const itemId = generateItemId(item); if (!poStatusMap[po]) poStatusMap[po] = { total: 0, completed: 0 }; poStatusMap[po].total++; if (window.completionStatus[itemId] === true) poStatusMap[po].completed++; });
-               for (const po in poStatusMap) { if (poStatusMap[po].completed === 0) poCompletionState[po] = 'pending'; else if (poStatusMap[po].completed === poStatusMap[po].total) {poCompletionState[po] = 'full'; completedPOs.push(po);} else poCompletionState[po] = 'partial'; }
-               completedPOs.sort();
-            filteredItems.sort((a, b) => { const pc = (a.PO || '').localeCompare(b.PO || ''); return pc !== 0 ? pc : (a.Produto || '').localeCompare(b.Produto || ''); });
+            if (filteredItems.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="text-center text-gray-500 py-6">${(selectedPOs.size === 0 && uniquePOs.length > 0) ? 'Nenhuma PO selecionada.' : 'Nenhum item encontrado.'}</td></tr>`; emptyMsg.style.display = 'block'; renderCompletedPOScroller([]); return; }
+            emptyMsg.style.display = 'none';
+            const poStatusMap = {}; const poCompletionState = {}; const completedPOs = [];
+            filteredItems.forEach(item => { const po = item.PO || 'na'; const itemId = generateItemId(item); if (!poStatusMap[po]) poStatusMap[po] = { total: 0, completed: 0 }; poStatusMap[po].total++; if (window.completionStatus[itemId] === true) poStatusMap[po].completed++; });
+            for (const po in poStatusMap) { if (poStatusMap[po].completed === 0) poCompletionState[po] = 'pending'; else if (poStatusMap[po].completed === poStatusMap[po].total) {poCompletionState[po] = 'full'; completedPOs.push(po);} else poCompletionState[po] = 'partial'; }
+            completedPOs.sort();
+            
+            // NOVO: Ordenação baseada no seletor de Data ou Ordenação Padrão
+            const sortOrder = document.getElementById('date-sort').value;
+            filteredItems.sort((a, b) => {
+                if (sortOrder === 'asc' || sortOrder === 'desc') {
+                    const dA = getItemDate(a);
+                    const dB = getItemDate(b);
+                    if (!dA && !dB) return 0;
+                    if (!dA) return 1;
+                    if (!dB) return -1;
+                    const timeDiff = sortOrder === 'asc' ? dA.getTime() - dB.getTime() : dB.getTime() - dA.getTime();
+                    if (timeDiff !== 0) return timeDiff;
+                    return (a.PO || '').localeCompare(b.PO || ''); // desempate por PO
+                } else {
+                    const pc = (a.PO || '').localeCompare(b.PO || ''); return pc !== 0 ? pc : (a.Produto || '').localeCompare(b.Produto || '');
+                }
+            });
             
             filteredItems.forEach(item => {
                 const itemId = generateItemId(item); 
@@ -787,12 +835,22 @@
                 else { if (isItemCompleted) rowClass = 'completed-row'; }
                 const isDisabled = window.isAdmin ? '' : 'disabled';
                 
+                // Formatação da Data para exibição
+                const dateRaw = item.Data || item.Data_Pedido || item.Data_Emissao || '';
+                let dateStr = 'N/A';
+                if(dateRaw) {
+                    const parts = dateRaw.split('-');
+                    if(parts.length === 3) dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    else dateStr = dateRaw;
+                }
+                
                 tbody.innerHTML += `
                         <tr class="${rowClass}" data-item-id="${itemId}"> 
                             <td class="text-center">
                                 <input type="checkbox" class="form-checkbox" ${isItemCompleted ? 'checked' : ''} ${isDisabled} onchange="window.toggleItemCompletion(this)">
                             </td> 
                             <td>${item.PO || 'N/A'}${poIndicatorIcon}</td> 
+                            <td>${dateStr}</td>
                             <td>${item.Cliente || 'N/A'}</td> 
                             <td>${item.Perfil || 'N/A'}</td> 
                             <td>${item.Produto || 'N/A'}</td> 
@@ -800,7 +858,7 @@
                             <td>${formatM3(emCarteiraM3)}</td> 
                         </tr>`;
             });
-               renderCompletedPOScroller(completedPOs);
+            renderCompletedPOScroller(completedPOs);
         }
 
         function renderCompletedPOScroller(completedPOs) {
@@ -894,17 +952,14 @@
             generatePDFWithAutoTable(jsPDF, "LISTA DE COMPRAS CONSOLIDADA (MRP GLOBAL)", tempDiv.querySelector('table'), exportButton, () => { document.body.removeChild(tempDiv); });
         }
 
-        // --- FUNÇÃO EXCEL (ATUALIZADA COM DATAS E DETALHES DOS PEDIDOS) ---
         function exportMPSToExcel() {
             const btn = document.getElementById('btn-export-excel');
             const originalText = btn.innerHTML;
             btn.innerHTML = "Gerando Excel...";
             
             try {
-                // Aba 1: Preparar dados agregados para o Excel (Plano de Produção MPS)
                 const dataForExcel = [];
                 G_DASHBOARD_DATA.forEach(item => {
-                    // Adicionar Linha Pai
                     dataForExcel.push({
                         "Produto": item.Produto,
                         "Perfil": item.Perfil,
@@ -917,7 +972,6 @@
                         "Pcts A Produzir": item.Pacotes_A_Produzir
                     });
 
-                    // Adicionar Sub-itens se houver
                     if (item.SubItems && item.SubItems.length > 0) {
                         item.SubItems.forEach(sub => {
                             dataForExcel.push({
@@ -940,16 +994,13 @@
                     return;
                 }
 
-                // Criar o workbook e adicionar a primeira aba do Plano de Produção
                 const wsMPS = XLSX.utils.json_to_sheet(dataForExcel);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, wsMPS, "Plano de Produção (MPS)");
 
-                // Aba 2: Adicionar a listagem de Pedidos Detalhados com a DATA respectiva
                 const dataDetailsForExcel = G_FILTERED_PENDING_ITEMS.map(item => {
                     return {
                         "PO (Pedido)": item.PO || "N/A",
-                        // Adapte o campo abaixo se sua base JSON usa um nome diferente, ex: item.Data, item.Emissao, item.Data_Pedido
                         "Data do Pedido": item.Data || item.Data_Pedido || item.Data_Emissao || "N/A",
                         "Cliente": item.Cliente || "N/A",
                         "Produto": item.Produto || "N/A",
@@ -966,7 +1017,6 @@
                     XLSX.utils.book_append_sheet(wb, wsDetails, "Detalhes dos Pedidos");
                 }
 
-                // Salvar arquivo
                 const dataStr = new Date().toISOString().split('T')[0];
                 XLSX.writeFile(wb, `MPS_PCP_Flora_${dataStr}.xlsx`);
 
@@ -1007,8 +1057,30 @@
 
         function updateDashboardAndDetail() {
              if (!ALL_PENDING_ITEMS || !ALL_STOCK_ITEMS) return;
-             const filteredItemsEmCarteira = ALL_PENDING_ITEMS.filter(item => { const poValue = item && item.PO ? String(item.PO) : null; return poValue && selectedPOs.has(poValue); });
+             
+             // Coleta os valores do novo Filtro de Data
+             const startDateInput = document.getElementById('date-start').value;
+             const endDateInput = document.getElementById('date-end').value;
+
+             const filteredItemsEmCarteira = ALL_PENDING_ITEMS.filter(item => { 
+                 const poValue = item && item.PO ? String(item.PO) : null; 
+                 if(!poValue || !selectedPOs.has(poValue)) return false;
+
+                 // NOVO: Lógica de Filtragem de Datas
+                 if (startDateInput || endDateInput) {
+                     const itemDateRaw = item.Data || item.Data_Pedido || item.Data_Emissao;
+                     if (!itemDateRaw) return false; // Ignora se estiver filtrando por data e o item não tiver data
+                     
+                     // Extrai só o YYYY-MM-DD para garantir comparação de strings sem problema de fuso
+                     const itemDateStr = itemDateRaw.substring(0, 10);
+                     if (startDateInput && itemDateStr < startDateInput) return false;
+                     if (endDateInput && itemDateStr > endDateInput) return false;
+                 }
+                 
+                 return true; 
+             });
              G_FILTERED_PENDING_ITEMS = filteredItemsEmCarteira;
+
              const itemsAReservar = ALL_PENDING_ITEMS.filter(item => { const poValue = item && item.PO ? String(item.PO) : null; return poValue && reservedPOs.has(poValue); });
              const reservedStockSummary = itemsAReservar.reduce((acc, item) => { const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`; if (!acc[key]) acc[key] = { Pecas_Reservadas: 0, M3_Reservados: 0 }; acc[key].Pecas_Reservadas += item.Pendente_Pecas || 0; acc[key].M3_Reservados += item.Pendente_M3 || 0; return acc; }, {});
              const adjustedStockItems = ALL_STOCK_ITEMS.map(stockItem => {
@@ -1109,6 +1181,16 @@
             document.getElementById('export-mrp-pdf').addEventListener('click', exportMRPToPDF);
             document.getElementById('btn-global-mrp-pdf').addEventListener('click', exportGlobalMRPToPDF);
             document.getElementById('btn-export-excel').addEventListener('click', exportMPSToExcel);
+
+            // NOVO: Listeners para o filtro e ordenação de datas
+            document.getElementById('btn-apply-date').addEventListener('click', updateDashboardAndDetail);
+            document.getElementById('btn-clear-date').addEventListener('click', () => {
+                document.getElementById('date-start').value = '';
+                document.getElementById('date-end').value = '';
+                document.getElementById('date-sort').value = 'default';
+                updateDashboardAndDetail();
+            });
+            document.getElementById('date-sort').addEventListener('change', updateDashboardAndDetail);
 
             const handleInteraction = (event) => {
                  const selectElement = event.currentTarget, currentScrollTop = selectElement.scrollTop;
