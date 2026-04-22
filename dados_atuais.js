@@ -14,8 +14,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.017,
     "Largura": 0.0381,
     "Comprimento": 2.4384,
-    "M3_Estoque_Liquido": 6.898608,
-    "Pecas_Estoque_Liquido": 4368.0
+    "M3_Estoque_Liquido": -1.3824000077988785e-07,
+    "Pecas_Estoque_Liquido": 0.0
   },
   {
     "Produto": "MOLDURAS",
@@ -23,8 +23,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.017,
     "Largura": 0.0889,
     "Comprimento": 2.4384,
-    "M3_Estoque_Liquido": 26.0024461,
-    "Pecas_Estoque_Liquido": 7056.0
+    "M3_Estoque_Liquido": 3.714635191839996,
+    "Pecas_Estoque_Liquido": 1008.0
   },
   {
     "Produto": "MOLDURAS",
@@ -1323,10 +1323,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 4368,
     "Solicitado_M3": 6.898608,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 6.898608,
-    "Pendente_Pecas": 4368.0
+    "Enviado_Pecas": 4368.0,
+    "Enviado_M3_Calc": 6.898608,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "4500410373",
@@ -1338,10 +1338,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Comprimento": 2.4384,
     "Solicitado_Pecas": 6048,
     "Solicitado_M3": 22.287811,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 22.287811,
-    "Pendente_Pecas": 6048.0
+    "Enviado_Pecas": 6048.0,
+    "Enviado_M3_Calc": 22.287811,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   }
 ];
 
