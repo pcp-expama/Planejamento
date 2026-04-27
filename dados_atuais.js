@@ -73,6 +73,15 @@ const MOCK_ESTOQUE_LIQUIDO = [
   },
   {
     "Produto": "PAINEL RIPADO",
+    "Perfil": "IMPRESSO",
+    "Espessura": 0.012,
+    "Largura": 0.13811,
+    "Comprimento": 2.4384,
+    "M3_Estoque_Liquido": 10.1838469,
+    "Pecas_Estoque_Liquido": 2520.0
+  },
+  {
+    "Produto": "PAINEL RIPADO",
     "Perfil": "PRETO",
     "Espessura": 0.012,
     "Largura": 0.13335,
