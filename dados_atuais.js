@@ -10,15 +10,6 @@ const MOCK_ESTOQUE_LIQUIDO = [
   },
   {
     "Produto": "MOLDURAS",
-    "Perfil": "IMPRESSO",
-    "Espessura": 0.012,
-    "Largura": 0.13335,
-    "Comprimento": 2.4384,
-    "M3_Estoque_Liquido": 29.4985732608,
-    "Pecas_Estoque_Liquido": 7560.0
-  },
-  {
-    "Produto": "MOLDURAS",
     "Perfil": "LS4S",
     "Espessura": 0.017,
     "Largura": 0.0381,
@@ -77,8 +68,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 2.4384,
-    "M3_Estoque_Liquido": 1.0423999583508703e-06,
-    "Pecas_Estoque_Liquido": 0.0
+    "M3_Estoque_Liquido": 29.49857430320003,
+    "Pecas_Estoque_Liquido": 7560.0
   },
   {
     "Produto": "PAINEL RIPADO",
