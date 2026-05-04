@@ -86,8 +86,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 2.4384,
-    "M3_Estoque_Liquido": 86.85691078399987,
-    "Pecas_Estoque_Liquido": 22260.0
+    "M3_Estoque_Liquido": 75.3852434047999,
+    "Pecas_Estoque_Liquido": 19320.0
   }
 ];
 
@@ -682,10 +682,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Solicitado_Pecas": 2940,
     "Solicitado_M3": 11.471667,
     "Vol_Medio_Peca": 0.003901927551020408,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 11.471667,
-    "Pendente_Pecas": 2940.0
+    "Enviado_Pecas": 2940.0,
+    "Enviado_M3_Calc": 11.471667,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1086325-00",
