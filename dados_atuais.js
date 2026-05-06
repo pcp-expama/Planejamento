@@ -41,8 +41,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 1.2192,
-    "M3_Estoque_Liquido": 5.7358336439999995,
-    "Pecas_Estoque_Liquido": 2940.0
+    "M3_Estoque_Liquido": 7.3746432696,
+    "Pecas_Estoque_Liquido": 3780.0
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -50,8 +50,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 2.4384,
-    "M3_Estoque_Liquido": 4.530138154879992,
-    "Pecas_Estoque_Liquido": 1161.0
+    "M3_Estoque_Liquido": 12.724186282879984,
+    "Pecas_Estoque_Liquido": 3261.0
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -68,8 +68,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 2.4384,
-    "M3_Estoque_Liquido": 24.582145370399985,
-    "Pecas_Estoque_Liquido": 6300.0
+    "M3_Estoque_Liquido": 36.05381274960001,
+    "Pecas_Estoque_Liquido": 9240.0
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -77,8 +77,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 1.2192,
-    "M3_Estoque_Liquido": 2.458214408,
-    "Pecas_Estoque_Liquido": 1260.0
+    "M3_Estoque_Liquido": 4.916428846399999,
+    "Pecas_Estoque_Liquido": 2520.0
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -86,8 +86,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 2.4384,
-    "M3_Estoque_Liquido": 42.498573887999896,
-    "Pecas_Estoque_Liquido": 10920.0
+    "M3_Estoque_Liquido": 55.60905089279993,
+    "Pecas_Estoque_Liquido": 14280.0
   }
 ];
 
