@@ -41,8 +41,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 1.2192,
-    "M3_Estoque_Liquido": 7.3746432696,
-    "Pecas_Estoque_Liquido": 3780.0
+    "M3_Estoque_Liquido": 5.7358336439999995,
+    "Pecas_Estoque_Liquido": 2940.0
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -50,8 +50,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 2.4384,
-    "M3_Estoque_Liquido": 12.724186282879984,
-    "Pecas_Estoque_Liquido": 3261.0
+    "M3_Estoque_Liquido": 4.530138154879992,
+    "Pecas_Estoque_Liquido": 1161.0
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -68,8 +68,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 2.4384,
-    "M3_Estoque_Liquido": 36.05381274960001,
-    "Pecas_Estoque_Liquido": 9240.0
+    "M3_Estoque_Liquido": 24.582145370399985,
+    "Pecas_Estoque_Liquido": 6300.0
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -77,8 +77,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 1.2192,
-    "M3_Estoque_Liquido": 4.916428846399999,
-    "Pecas_Estoque_Liquido": 2520.0
+    "M3_Estoque_Liquido": 2.458214408,
+    "Pecas_Estoque_Liquido": 1260.0
   },
   {
     "Produto": "PAINEL RIPADO",
@@ -86,8 +86,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.012,
     "Largura": 0.13335,
     "Comprimento": 2.4384,
-    "M3_Estoque_Liquido": 55.60905089279993,
-    "Pecas_Estoque_Liquido": 14280.0
+    "M3_Estoque_Liquido": 42.498573887999896,
+    "Pecas_Estoque_Liquido": 10920.0
   }
 ];
 
@@ -903,10 +903,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Solicitado_Pecas": 840,
     "Solicitado_M3": 1.63881,
     "Vol_Medio_Peca": 0.001950964285714286,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 1.63881,
-    "Pendente_Pecas": 840.0
+    "Enviado_Pecas": 840.0,
+    "Enviado_M3_Calc": 1.63881,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1086492-00",
@@ -920,10 +920,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Solicitado_Pecas": 2100,
     "Solicitado_M3": 8.194048,
     "Vol_Medio_Peca": 0.003901927619047619,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 8.194048,
-    "Pendente_Pecas": 2100.0
+    "Enviado_Pecas": 2100.0,
+    "Enviado_M3_Calc": 8.194048,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1086492-00",
@@ -937,10 +937,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Solicitado_Pecas": 2940,
     "Solicitado_M3": 11.471667,
     "Vol_Medio_Peca": 0.003901927551020408,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 11.471667,
-    "Pendente_Pecas": 2940.0
+    "Enviado_Pecas": 2940.0,
+    "Enviado_M3_Calc": 11.471667,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1086492-00",
@@ -954,10 +954,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Solicitado_Pecas": 1260,
     "Solicitado_M3": 2.458214,
     "Vol_Medio_Peca": 0.001950963492063492,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 2.458214,
-    "Pendente_Pecas": 1260.0
+    "Enviado_Pecas": 1260.0,
+    "Enviado_M3_Calc": 2.458214,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1086492-00",
@@ -971,10 +971,10 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Solicitado_Pecas": 3360,
     "Solicitado_M3": 13.110477,
     "Vol_Medio_Peca": 0.0039019276785714286,
-    "Enviado_Pecas": 0.0,
-    "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 13.110477,
-    "Pendente_Pecas": 3360.0
+    "Enviado_Pecas": 3360.0,
+    "Enviado_M3_Calc": 13.110477,
+    "Pendente_M3": 0.0,
+    "Pendente_Pecas": 0.0
   },
   {
     "PO": "1086496-00",
