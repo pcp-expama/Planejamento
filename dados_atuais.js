@@ -1536,6 +1536,23 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Enviado_M3_Calc": 0.0,
     "Pendente_M3": 2.830314,
     "Pendente_Pecas": 896.0
+  },
+  {
+    "PO": "5908",
+    "Cliente": "HOLLAND",
+    "Data_Pedido": "19/05/2026",
+    "Perfil": "RAW STRIPS",
+    "Produto": "PRATELEIRA",
+    "Espessura": 0.017,
+    "Largura": 0.28575,
+    "Comprimento": 4.877,
+    "Solicitado_Pecas": 570,
+    "Solicitado_M3": 13.504011,
+    "Vol_Medio_Peca": 0.023691247368421053,
+    "Enviado_Pecas": 0.0,
+    "Enviado_M3_Calc": 0.0,
+    "Pendente_M3": 13.504011,
+    "Pendente_Pecas": 570.0
   }
 ];
 
