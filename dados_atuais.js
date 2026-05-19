@@ -1540,7 +1540,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "5908",
     "Cliente": "HOLLAND",
-    "Data_Pedido": "19/05/2026",
+    "Data_Pedido": "18/05/2026",
     "Perfil": "RAW STRIPS",
     "Produto": "PRATELEIRA",
     "Espessura": 0.017,
@@ -1557,7 +1557,7 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
   {
     "PO": "5908",
     "Cliente": "HOLLAND",
-    "Data_Pedido": "19/05/2026",
+    "Data_Pedido": "18/05/2026",
     "Perfil": "RAW STRIPS",
     "Produto": "PRATELEIRA",
     "Espessura": 0.017,
