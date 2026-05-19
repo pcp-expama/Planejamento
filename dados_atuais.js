@@ -1544,15 +1544,32 @@ const MOCK_DADOS_PENDENTES_DETALHADOS = [
     "Perfil": "RAW STRIPS",
     "Produto": "PRATELEIRA",
     "Espessura": 0.017,
-    "Largura": 0.28575,
+    "Largura": 0.1397,
     "Comprimento": 4.877,
-    "Solicitado_Pecas": 570,
-    "Solicitado_M3": 13.504011,
-    "Vol_Medio_Peca": 0.023691247368421053,
+    "Solicitado_Pecas": 259,
+    "Solicitado_M3": 2.999838,
+    "Vol_Medio_Peca": 0.0115823861003861,
     "Enviado_Pecas": 0.0,
     "Enviado_M3_Calc": 0.0,
-    "Pendente_M3": 13.504011,
-    "Pendente_Pecas": 570.0
+    "Pendente_M3": 2.999838,
+    "Pendente_Pecas": 259.0
+  },
+  {
+    "PO": "5908",
+    "Cliente": "HOLLAND",
+    "Data_Pedido": "19/05/2026",
+    "Perfil": "RAW STRIPS",
+    "Produto": "PRATELEIRA",
+    "Espessura": 0.017,
+    "Largura": 0.28575,
+    "Comprimento": 4.877,
+    "Solicitado_Pecas": 1354,
+    "Solicitado_M3": 32.077948,
+    "Vol_Medio_Peca": 0.02369124667651403,
+    "Enviado_Pecas": 0.0,
+    "Enviado_M3_Calc": 0.0,
+    "Pendente_M3": 32.077948,
+    "Pendente_Pecas": 1354.0
   }
 ];
 
