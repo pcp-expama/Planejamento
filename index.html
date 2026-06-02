@@ -184,7 +184,7 @@
         .btn.btn-secondary:hover { background-color: var(--accent-secondary); color: var(--bg-primary); border-color: var(--accent-secondary); }
         .btn-global-export { background-color: #983A1E; color: #FFFFFF; font-weight: bold; padding: 0.75rem 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
         .btn-global-export:hover { background-color: #E1D7C7; color: #000; }
-        .btn-excel { background-color: #1D6F42; color: #FFFFFF; } /* Cor do Excel */
+        .btn-excel { background-color: #1D6F42; color: #FFFFFF; }
         .btn-excel:hover { background-color: #145532; color: #FFFFFF; }
         .btn-filter { background-color: var(--bg-secondary); color: var(--accent-primary1); padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 1.1rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s; border: 1px solid var(--border-color); margin-right: 0.5rem; }
         .btn-filter:hover { background-color: var(--accent-secondary); color: var(--bg-primary); border-color: var(--accent-secondary); }
@@ -333,7 +333,7 @@
         <div class="mt-auto border-t border-gray-700 pt-4">
             <div id="data-status" class="text-base text-gray-400 mode-mobile-text">Verificando...</div>
              <div id="data-last-updated" class="text-base text-gray-500 mt-1 mode-mobile-text"></div>
-             <p class="text-base text-gray-500 mt-2 mode-mobile-text">Versão: 1.1.1 </p>
+             <p class="text-base text-gray-500 mt-2 mode-mobile-text">Versão: 1.4.0 (Soma de Pacotes Correta) </p>
              <p class="text-base text-gray-500 mt-1 mode-mobile-text">© Copyright 2026 Flora Exportadora</p>
         </div>
     </aside>
@@ -455,21 +455,7 @@
     <script> 
         const CAMINHO_JS = "dados_atuais.js";
         
-        const FALLBACK_DATA = {
-            estoque: [
-                { Produto: "MOLDURAS", Perfil: "LS4S", Largura: 0.0889, Comprimento: 2.4384, M3_Estoque_Liquido: 26.002, Pecas_Estoque_Liquido: 7056.0 },
-                { Produto: "MOLDURAS", Perfil: "LS4S", Largura: 0.0381, Comprimento: 2.4384, M3_Estoque_Liquido: 0.0, Pecas_Estoque_Liquido: 0.0 }, 
-                { Produto: "PAINEL RIPADO", Perfil: "BRANCO", M3_Estoque_Liquido: 59.430, Pecas_Estoque_Liquido: 16281.0 },
-                { Produto: "PAINEL RIPADO", Perfil: "IMPRESSO", M3_Estoque_Liquido: 4.916, Pecas_Estoque_Liquido: 1260.0 },
-                { Produto: "PAINEL RIPADO", Perfil: "PRETO", M3_Estoque_Liquido: 11.471, Pecas_Estoque_Liquido: 2940.0 }
-            ],
-            pendentes: [
-                { PO: "1084727-00", Data: "2026-03-15", Cliente: "NOVO", Perfil: "IMPRESSO", Produto: "PAINEL RIPADO", Espessura: 0.012, Largura: 0.13335, Comprimento: 2.4384, Pendente_M3: 21.304, Pendente_Pecas: 5460.0 },
-                { PO: "4500410373", Data: "2026-04-10", Cliente: "METRIE", Perfil: "LS4S", Produto: "MOLDURAS", Espessura: 0.017, Largura: 0.0381, Comprimento: 2.4384, Pendente_M3: 6.898, Pendente_Pecas: 4368.0 },
-                { PO: "4500410374", Data: "2026-04-12", Cliente: "METRIE", Perfil: "LS4S", Produto: "MOLDURAS", Espessura: 0.017, Largura: 0.0889, Comprimento: 2.4384, Pendente_M3: 22.287, Pendente_Pecas: 6048.0 }
-            ],
-            bom: []
-        };
+        const FALLBACK_DATA = { estoque: [], pendentes: [], bom: [] };
 
         let ALL_PENDING_ITEMS = []; 
         let ALL_STOCK_ITEMS = [];
@@ -547,7 +533,6 @@
             return formatNumber(num, 0) + ' POs';
         }
 
-        // NOVO: Função para extrair e criar objeto de data válido
         function getItemDate(item) {
             const dateStr = item.Data || item.Data_Pedido || item.Data_Emissao;
             if (!dateStr) return null;
@@ -555,33 +540,73 @@
             return isNaN(d.getTime()) ? null : d;
         }
 
+        function getVolumeUnitario(item) {
+            const e = parseFloat(item.Espessura) || 0;
+            const l = parseFloat(item.Largura) || 0;
+            const c = parseFloat(item.Comprimento) || 0;
+            if (e > 0 && l > 0 && c > 0) return e * l * c;
+            return 0;
+        }
+
+        function getPecasSeguro(item, m3Key, pecasKey) {
+            const m3Total = parseFloat(item[m3Key]) || 0;
+            const volPeca = getVolumeUnitario(item);
+            
+            if (m3Total > 0 && volPeca > 0) {
+                return Math.round(m3Total / volPeca);
+            }
+            return parseFloat(item[pecasKey]) || 0;
+        }
+
+        // ============================================================================
+        // ATUALIZAÇÃO 1.4.0: OVERRIDE BDL DO POWER BI PARA PRATELEIRA
+        // ============================================================================
         function getPecasPorPacote(item) {
-            if (typeof item === 'string') return item === 'LS4S' ? 294 : 420;
             const produto = (item.Produto || '').toUpperCase();
             const perfil = (item.Perfil || '').toUpperCase();
             const largura = parseFloat(item.Largura) || 0;
             const comprimento = parseFloat(item.Comprimento) || 0;
+
+            // 1. REGRA ESTRITA: PRATELEIRA / RAW STRIPS
+            // Ignora o valor do banco de dados (que estava quebrando a 139.7mm) e força a matemática real
+            if (produto.includes('PRATELEIRA') || perfil.includes('RAW STRIPS')) {
+                if (largura >= 0.280 && largura <= 0.290) return 112; 
+                if (largura >= 0.135 && largura <= 0.145) return 259; // FORÇA 259 para a de 139.7mm!
+                if (largura >= 0.035 && largura <= 0.040) return 896; 
+                return 112; 
+            }
+
+            // 2. Se não for Prateleira e tiver o BDL certo no Power BI, obedece
+            if (item.BDL) {
+                const bdl = parseFloat(item.BDL);
+                if (bdl > 0) return bdl;
+            }
+
+            // 3. Fallbacks normais
+            if (typeof item === 'string') return item === 'LS4S' ? 294 : 420;
             if (produto.includes('PAINEL RIPADO')) return 420;
+            
             if (largura > 0) {
-                if (Math.abs(largura - 0.0381) < 0.0001) return 1092;
-                else if (Math.abs(largura - 0.0889) < 0.0001) return 504;
-                else if (Math.abs(largura - 0.1397) < 0.0001) {
-                    if (Math.abs(comprimento - 3.657) < 0.001) return 210;
+                if (Math.abs(largura - 0.0381) < 0.005) return 1092;
+                else if (Math.abs(largura - 0.0889) < 0.005) return 504;
+                else if (Math.abs(largura - 0.1397) < 0.005) {
+                    if (Math.abs(comprimento - 3.657) < 0.05) return 210;
                     else return 294;
                 }
             }
             return perfil === 'LS4S' ? 294 : 420;
         }
-        
+
         function calcularResumoTotal(pendingItems) {
-            const itemsEmCarteira = pendingItems.filter(item => (item.Pendente_Pecas || 0) > 0 || (item.Pendente_M3 || 0) > 0.001);
+            const itemsEmCarteira = pendingItems.filter(item => getPecasSeguro(item, 'Pendente_M3', 'Pendente_Pecas') > 0 || (item.Pendente_M3 || 0) > 0.001);
             const totalPOs = new Set(itemsEmCarteira.map(item => item.PO)).size;
             let totalPacotes = 0; let totalM3 = 0;
             itemsEmCarteira.forEach(item => {
-                const pendentePecas = item.Pendente_Pecas || 0;
-                totalM3 += item.Pendente_M3 || 0;
-                if (pendentePecas > 0) {
-                    totalPacotes += Math.round(pendentePecas / getPecasPorPacote(item));
+                const pendM3 = parseFloat(item.Pendente_M3) || 0;
+                const pendPecas = getPecasSeguro(item, 'Pendente_M3', 'Pendente_Pecas');
+                totalM3 += pendM3;
+                if (pendPecas > 0) {
+                    totalPacotes += Math.round(pendPecas / getPecasPorPacote(item));
                 }
             });
             return { totalPOs, totalPacotes, totalM3 };
@@ -608,9 +633,11 @@
                         Solicitado_Pecas: 0, Pecas_Estoque: 0, ItemRef: item
                     };
                 }
-                const pendPecas = item.Pendente_Pecas || 0;
-                const pendM3 = item.Pendente_M3 || 0;
+                
+                const pendM3 = parseFloat(item.Pendente_M3) || 0;
+                const pendPecas = getPecasSeguro(item, 'Pendente_M3', 'Pendente_Pecas'); 
                 const pacotes = pendPecas > 0 ? (pendPecas / getPecasPorPacote(item)) : 0;
+                
                 dashboardMap[mainKey].Solicitado_Pecas += pendPecas;
                 dashboardMap[mainKey].M3_Carteira_Volume += pendM3;
                 dashboardMap[mainKey].Pacotes_Carteira += pacotes;
@@ -630,8 +657,10 @@
                         Solicitado_Pecas: 0, Pecas_Estoque: 0, subItems: {}
                     };
                 }
-                const estPecas = item.Pecas_Estoque_Liquido || 0;
-                const estM3 = item.M3_Estoque_Liquido || 0;
+                
+                const estM3 = parseFloat(item.M3_Estoque_Liquido) || 0;
+                const estPecas = getPecasSeguro(item, 'M3_Estoque_Liquido', 'Pecas_Estoque_Liquido');
+                
                 dashboardMap[mainKey].Pecas_Estoque += estPecas;
                 dashboardMap[mainKey].M3_Estoque_Liquido += estM3;
                 if (item.Largura) {
@@ -649,11 +678,12 @@
 
             const result = [];
             Object.values(dashboardMap).forEach(parent => {
-                const fallbackPecasPorPacote = getPecasPorPacote({ Produto: parent.Produto, Perfil: parent.Perfil });
                 parent.M3_A_Produzir = Math.max(0, parent.M3_Carteira_Volume - parent.M3_Estoque_Liquido);
-                parent.Pacotes_Carteira_Round = Math.round(parent.Pacotes_Carteira);
-                parent.Pacotes_Estoque_Round = Math.floor(parent.Pecas_Estoque / fallbackPecasPorPacote);
-                parent.Pacotes_A_Produzir = Math.max(0, parent.Pacotes_Carteira_Round - parent.Pacotes_Estoque_Round);
+                
+                // ATUALIZAÇÃO 1.4.0: Agora a linha pai SOMA perfeitamente os filhos, 
+                // e não tenta mais dividir o bolo genérico, eliminando o erro do "22"
+                let sumPacotesCarteira = 0;
+                let sumPacotesEstoque = 0;
 
                 const subItemsArray = Object.values(parent.subItems).map(sub => {
                      const subPecasPacote = getPecasPorPacote(sub.ItemRef);
@@ -661,6 +691,10 @@
                      const subPacotesEstRound = Math.floor(sub.Pecas_Estoque / subPecasPacote);
                      const subM3AProduzir = Math.max(0, sub.M3_Carteira_Volume - sub.M3_Estoque_Liquido);
                      const subPacotesAProduzir = Math.max(0, subPacotesCartRound - subPacotesEstRound);
+                     
+                     sumPacotesCarteira += subPacotesCartRound;
+                     sumPacotesEstoque += subPacotesEstRound;
+
                      return {
                          Nome: sub.Nome, M3_Carteira_Volume: sub.M3_Carteira_Volume,
                          M3_Estoque_Liquido: sub.M3_Estoque_Liquido, Pacotes_Carteira: subPacotesCartRound,
@@ -680,8 +714,8 @@
                     result.push({
                         Produto: parent.Produto, Perfil: parent.Perfil,
                         M3_Carteira_Volume: parent.M3_Carteira_Volume, M3_Estoque_Liquido: parent.M3_Estoque_Liquido,
-                        Pacotes_Carteira: parent.Pacotes_Carteira_Round, Pacotes_Estoque: parent.Pacotes_Estoque_Round,
-                        M3_A_Produzir: parent.M3_A_Produzir, Pacotes_A_Produzir: parent.Pacotes_A_Produzir,
+                        Pacotes_Carteira: sumPacotesCarteira, Pacotes_Estoque: sumPacotesEstoque,
+                        M3_A_Produzir: parent.M3_A_Produzir, Pacotes_A_Produzir: Math.max(0, sumPacotesCarteira - sumPacotesEstoque),
                         SubItems: activeSubItems
                     });
                 }
@@ -806,7 +840,6 @@
             for (const po in poStatusMap) { if (poStatusMap[po].completed === 0) poCompletionState[po] = 'pending'; else if (poStatusMap[po].completed === poStatusMap[po].total) {poCompletionState[po] = 'full'; completedPOs.push(po);} else poCompletionState[po] = 'partial'; }
             completedPOs.sort();
             
-            // NOVO: Ordenação baseada no seletor de Data ou Ordenação Padrão
             const sortOrder = document.getElementById('date-sort').value;
             filteredItems.sort((a, b) => {
                 if (sortOrder === 'asc' || sortOrder === 'desc') {
@@ -817,7 +850,7 @@
                     if (!dB) return -1;
                     const timeDiff = sortOrder === 'asc' ? dA.getTime() - dB.getTime() : dB.getTime() - dA.getTime();
                     if (timeDiff !== 0) return timeDiff;
-                    return (a.PO || '').localeCompare(b.PO || ''); // desempate por PO
+                    return (a.PO || '').localeCompare(b.PO || '');
                 } else {
                     const pc = (a.PO || '').localeCompare(b.PO || ''); return pc !== 0 ? pc : (a.Produto || '').localeCompare(b.Produto || '');
                 }
@@ -827,15 +860,17 @@
                 const itemId = generateItemId(item); 
                 const isItemCompleted = window.completionStatus[itemId] === true; 
                 const poState = poCompletionState[item.PO || 'na'];
-                const emCarteiraPct = Math.round((item.Pendente_Pecas || 0) / getPecasPorPacote(item)); 
-                const emCarteiraM3 = item.Pendente_M3 || 0;
+                
+                const pendM3 = parseFloat(item.Pendente_M3) || 0;
+                const pendPecas = getPecasSeguro(item, 'Pendente_M3', 'Pendente_Pecas');
+                const emCarteiraPct = Math.round(pendPecas / getPecasPorPacote(item)); 
+                
                 let rowClass = '', poIndicatorIcon = '';
                 if (poState === 'full') { rowClass = 'completed-row'; poIndicatorIcon = '<span class="po-status-icon po-status-completed">✓</span>'; }
                 else if (poState === 'partial') { poIndicatorIcon = '<span class="po-status-icon po-status-partial">⚠️</span>'; if (isItemCompleted) rowClass = 'completed-row';}
                 else { if (isItemCompleted) rowClass = 'completed-row'; }
                 const isDisabled = window.isAdmin ? '' : 'disabled';
                 
-                // Formatação da Data para exibição
                 const dateRaw = item.Data || item.Data_Pedido || item.Data_Emissao || '';
                 let dateStr = 'N/A';
                 if(dateRaw) {
@@ -855,7 +890,7 @@
                             <td>${item.Perfil || 'N/A'}</td> 
                             <td>${item.Produto || 'N/A'}</td> 
                             <td>${formatPct(emCarteiraPct)}</td> 
-                            <td>${formatM3(emCarteiraM3)}</td> 
+                            <td>${formatM3(pendM3)}</td> 
                         </tr>`;
             });
             renderCompletedPOScroller(completedPOs);
@@ -892,7 +927,8 @@
             const pendingItemsForProduct = G_FILTERED_PENDING_ITEMS.filter(item => (item.Produto || 'N/A') === (produto || 'N/A') && (item.Perfil || 'N/A') === (perfil || 'N/A'));
             pendingItemsForProduct.forEach(item => {
                 let proporcaoItem = 0;
-                if (m3TotalCarteira > 0.001) proporcaoItem = (item.Pendente_M3 || 0) / m3TotalCarteira;
+                const itemM3 = parseFloat(item.Pendente_M3) || 0;
+                if (m3TotalCarteira > 0.001) proporcaoItem = itemM3 / m3TotalCarteira;
                 const m3ItemAProduzir = m3TotalAProduzir * proporcaoItem;
                 if (m3ItemAProduzir > 0) {
                     const receita = getRecipe(item); receita.forEach(bomItem => {
@@ -1007,8 +1043,8 @@
                         "Perfil": item.Perfil || "N/A",
                         "Largura": item.Largura || 0,
                         "Comprimento": item.Comprimento || 0,
-                        "Pcts Pendentes": Math.round((item.Pendente_Pecas || 0) / getPecasPorPacote(item)),
-                        "M3 Pendente": item.Pendente_M3 || 0
+                        "Pcts Pendentes": Math.round(getPecasSeguro(item, 'Pendente_M3', 'Pendente_Pecas') / getPecasPorPacote(item)),
+                        "M3 Pendente": parseFloat(item.Pendente_M3) || 0
                     };
                 });
 
@@ -1058,7 +1094,6 @@
         function updateDashboardAndDetail() {
              if (!ALL_PENDING_ITEMS || !ALL_STOCK_ITEMS) return;
              
-             // Coleta os valores do novo Filtro de Data
              const startDateInput = document.getElementById('date-start').value;
              const endDateInput = document.getElementById('date-end').value;
 
@@ -1066,12 +1101,10 @@
                  const poValue = item && item.PO ? String(item.PO) : null; 
                  if(!poValue || !selectedPOs.has(poValue)) return false;
 
-                 // NOVO: Lógica de Filtragem de Datas
                  if (startDateInput || endDateInput) {
                      const itemDateRaw = item.Data || item.Data_Pedido || item.Data_Emissao;
-                     if (!itemDateRaw) return false; // Ignora se estiver filtrando por data e o item não tiver data
+                     if (!itemDateRaw) return false; 
                      
-                     // Extrai só o YYYY-MM-DD para garantir comparação de strings sem problema de fuso
                      const itemDateStr = itemDateRaw.substring(0, 10);
                      if (startDateInput && itemDateStr < startDateInput) return false;
                      if (endDateInput && itemDateStr > endDateInput) return false;
@@ -1082,12 +1115,27 @@
              G_FILTERED_PENDING_ITEMS = filteredItemsEmCarteira;
 
              const itemsAReservar = ALL_PENDING_ITEMS.filter(item => { const poValue = item && item.PO ? String(item.PO) : null; return poValue && reservedPOs.has(poValue); });
-             const reservedStockSummary = itemsAReservar.reduce((acc, item) => { const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`; if (!acc[key]) acc[key] = { Pecas_Reservadas: 0, M3_Reservados: 0 }; acc[key].Pecas_Reservadas += item.Pendente_Pecas || 0; acc[key].M3_Reservados += item.Pendente_M3 || 0; return acc; }, {});
+             const reservedStockSummary = itemsAReservar.reduce((acc, item) => { 
+                 const key = `${item.Produto || 'N/A'}|${item.Perfil || 'N/A'}`; 
+                 if (!acc[key]) acc[key] = { Pecas_Reservadas: 0, M3_Reservados: 0 }; 
+                 acc[key].Pecas_Reservadas += getPecasSeguro(item, 'Pendente_M3', 'Pendente_Pecas'); 
+                 acc[key].M3_Reservados += parseFloat(item.Pendente_M3) || 0; 
+                 return acc; 
+             }, {});
+             
              const adjustedStockItems = ALL_STOCK_ITEMS.map(stockItem => {
-                 const key = `${stockItem.Produto || 'N/A'}|${stockItem.Perfil || 'N/A'}`; const reserva = reservedStockSummary[key]; let M3_Estoque_Liquido = stockItem.M3_Estoque_Liquido || 0, Pecas_Estoque_Liquido = stockItem.Pecas_Estoque_Liquido || 0;
-                 if (reserva) { M3_Estoque_Liquido -= reserva.M3_Reservados; Pecas_Estoque_Liquido -= reserva.Pecas_Reservadas; }
+                 const key = `${stockItem.Produto || 'N/A'}|${stockItem.Perfil || 'N/A'}`; 
+                 const reserva = reservedStockSummary[key]; 
+                 let M3_Estoque_Liquido = parseFloat(stockItem.M3_Estoque_Liquido) || 0;
+                 let Pecas_Estoque_Liquido = getPecasSeguro(stockItem, 'M3_Estoque_Liquido', 'Pecas_Estoque_Liquido');
+                 
+                 if (reserva) { 
+                     M3_Estoque_Liquido -= reserva.M3_Reservados; 
+                     Pecas_Estoque_Liquido -= reserva.Pecas_Reservadas; 
+                 }
                  return { ...stockItem, M3_Estoque_Liquido, Pecas_Estoque_Liquido };
              });
+             
              renderDashboard(calcularDashboard(filteredItemsEmCarteira, adjustedStockItems));
              renderDetailTable(filteredItemsEmCarteira);
         }
@@ -1143,7 +1191,9 @@
             const scriptNovo = document.createElement('script'); scriptNovo.id = 'script-dados'; scriptNovo.src = `${CAMINHO_JS}?v=${new Date().getTime()}`;
 
             const iniciarComDados = (estoque, pendentes, bom, origem) => {
-                ALL_STOCK_ITEMS = estoque; ALL_PENDING_ITEMS = pendentes.filter(item => (item.Pendente_Pecas || 0) > 0 || (item.Pendente_M3 || 0) > 0.001); ALL_BOM_DATA = bom;
+                ALL_STOCK_ITEMS = estoque; 
+                ALL_PENDING_ITEMS = pendentes.filter(item => getPecasSeguro(item, 'Pendente_M3', 'Pendente_Pecas') > 0 || (item.Pendente_M3 || 0) > 0.001); 
+                ALL_BOM_DATA = bom;
                 buildBomCache(ALL_BOM_DATA); uniquePOs = [...new Set(ALL_PENDING_ITEMS.map(item => item.PO))].sort();
                 if (ALL_PENDING_ITEMS.length === 0 && ALL_STOCK_ITEMS.length === 0) { 
                     globalStatus.textContent = `AVISO: Dados vazios (${origem}).`; globalStatus.className = 'status-box status-loading !mb-0';
@@ -1182,7 +1232,6 @@
             document.getElementById('btn-global-mrp-pdf').addEventListener('click', exportGlobalMRPToPDF);
             document.getElementById('btn-export-excel').addEventListener('click', exportMPSToExcel);
 
-            // NOVO: Listeners para o filtro e ordenação de datas
             document.getElementById('btn-apply-date').addEventListener('click', updateDashboardAndDetail);
             document.getElementById('btn-clear-date').addEventListener('click', () => {
                 document.getElementById('date-start').value = '';
