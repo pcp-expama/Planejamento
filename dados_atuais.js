@@ -88,6 +88,33 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Comprimento": 2.4384,
     "M3_Estoque_Liquido": 6.27199938207923e-07,
     "Pecas_Estoque_Liquido": 0.0
+  },
+  {
+    "Produto": "PRATELEIRA",
+    "Perfil": "RAW STRIPS",
+    "Espessura": 0.017,
+    "Largura": 0.0381,
+    "Comprimento": 4.877,
+    "M3_Estoque_Liquido": 2.8303143,
+    "Pecas_Estoque_Liquido": 896.0
+  },
+  {
+    "Produto": "PRATELEIRA",
+    "Perfil": "RAW STRIPS",
+    "Espessura": 0.017,
+    "Largura": 0.1397,
+    "Comprimento": 4.877,
+    "M3_Estoque_Liquido": 2.9998383,
+    "Pecas_Estoque_Liquido": 259.0
+  },
+  {
+    "Produto": "PRATELEIRA",
+    "Perfil": "RAW STRIPS",
+    "Espessura": 0.017,
+    "Largura": 0.28575,
+    "Comprimento": 4.877,
+    "M3_Estoque_Liquido": 31.9831832,
+    "Pecas_Estoque_Liquido": 1350.0
   }
 ];
 
