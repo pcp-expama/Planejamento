@@ -333,7 +333,7 @@
         <div class="mt-auto border-t border-gray-700 pt-4">
             <div id="data-status" class="text-base text-gray-400 mode-mobile-text">Verificando...</div>
              <div id="data-last-updated" class="text-base text-gray-500 mt-1 mode-mobile-text"></div>
-             <p class="text-base text-gray-500 mt-2 mode-mobile-text">Versão: 1.4.0 (Soma de Pacotes Correta) </p>
+             <p class="text-base text-gray-500 mt-2 mode-mobile-text">Versão: 1.4.1 (Sync 14 Pacotes) </p>
              <p class="text-base text-gray-500 mt-1 mode-mobile-text">© Copyright 2026 Flora Exportadora</p>
         </div>
     </aside>
@@ -558,31 +558,24 @@
             return parseFloat(item[pecasKey]) || 0;
         }
 
-        // ============================================================================
-        // ATUALIZAÇÃO 1.4.0: OVERRIDE BDL DO POWER BI PARA PRATELEIRA
-        // ============================================================================
         function getPecasPorPacote(item) {
             const produto = (item.Produto || '').toUpperCase();
             const perfil = (item.Perfil || '').toUpperCase();
             const largura = parseFloat(item.Largura) || 0;
             const comprimento = parseFloat(item.Comprimento) || 0;
 
-            // 1. REGRA ESTRITA: PRATELEIRA / RAW STRIPS
-            // Ignora o valor do banco de dados (que estava quebrando a 139.7mm) e força a matemática real
             if (produto.includes('PRATELEIRA') || perfil.includes('RAW STRIPS')) {
                 if (largura >= 0.280 && largura <= 0.290) return 112; 
-                if (largura >= 0.135 && largura <= 0.145) return 259; // FORÇA 259 para a de 139.7mm!
+                if (largura >= 0.135 && largura <= 0.145) return 259; 
                 if (largura >= 0.035 && largura <= 0.040) return 896; 
                 return 112; 
             }
 
-            // 2. Se não for Prateleira e tiver o BDL certo no Power BI, obedece
             if (item.BDL) {
                 const bdl = parseFloat(item.BDL);
                 if (bdl > 0) return bdl;
             }
 
-            // 3. Fallbacks normais
             if (typeof item === 'string') return item === 'LS4S' ? 294 : 420;
             if (produto.includes('PAINEL RIPADO')) return 420;
             
@@ -680,8 +673,6 @@
             Object.values(dashboardMap).forEach(parent => {
                 parent.M3_A_Produzir = Math.max(0, parent.M3_Carteira_Volume - parent.M3_Estoque_Liquido);
                 
-                // ATUALIZAÇÃO 1.4.0: Agora a linha pai SOMA perfeitamente os filhos, 
-                // e não tenta mais dividir o bolo genérico, eliminando o erro do "22"
                 let sumPacotesCarteira = 0;
                 let sumPacotesEstoque = 0;
 
