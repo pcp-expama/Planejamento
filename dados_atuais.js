@@ -113,8 +113,8 @@ const MOCK_ESTOQUE_LIQUIDO = [
     "Espessura": 0.017,
     "Largura": 0.28575,
     "Comprimento": 4.877,
-    "M3_Estoque_Liquido": 31.9831832,
-    "Pecas_Estoque_Liquido": 1350.0
+    "M3_Estoque_Liquido": 32.077948159,
+    "Pecas_Estoque_Liquido": 1354.0
   }
 ];
 
